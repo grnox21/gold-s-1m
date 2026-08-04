@@ -5,19 +5,19 @@
 //| See docs/SPECIFICATION.md for the full spec this implements.     |
 //+------------------------------------------------------------------+
 #property copyright "gold-s-1m"
-#property version   "1.01"
+#property version   "1.02"
 #property strict
 
 #include <Trade\Trade.mqh>
 
 //--- Session (Istanbul time, GMT+3 fixed)
-input group "=== Session (Istanbul time GMT+3) ==="
+input group "=== Session (Istanbul time GMT+3) ===";
 input int      InpSessionStartHour   = 11;     // Trading window start hour (Istanbul)
 input int      InpSessionEndHour     = 19;     // Trading window end hour (Istanbul)
 input int      InpBrokerGmtOffset    = 2;      // Broker server time offset from GMT (hours) - SET FOR YOUR BROKER
 
 //--- Money management
-input group "=== Money Management ==="
+input group "=== Money Management ===";
 input double   InpBaseBalance        = 50.0;   // Base balance for lot reference ($)
 input double   InpBaseLot            = 0.01;   // Lot size at base balance
 input double   InpLotScaleFactor     = 1.0;    // Lot scaling aggressiveness multiplier
@@ -25,7 +25,7 @@ input double   InpDailyProfitTargetPct = 20.0; // Daily profit target (%) -> sto
 input double   InpDailyLossLimitPct    = 10.0; // Daily loss limit (%) -> stop for the day
 
 //--- Trade management
-input group "=== Trade Management ==="
+input group "=== Trade Management ===";
 input int      InpTakeProfitPoints   = 12;     // Take Profit (points, broker _Point units)
 input int      InpStopLossPoints     = 12;     // Stop Loss (points)
 input int      InpBreakevenTriggerPoints = 5;  // Move SL to entry after this much profit (points)
@@ -38,7 +38,7 @@ input ulong    InpMagicNumber        = 20260803;
 input string   InpTradeComment       = "XAU_ScalpEA";
 
 //--- Filters
-input group "=== Entry Filters ==="
+input group "=== Entry Filters ===";
 input int      InpMaxSpreadPoints    = 300;    // Max allowed spread (points) - REVIEW vs TP, see spec section 7
 input int      InpEmaTrendPeriod     = 200;    // EMA period for M15 trend filter
 input int      InpEmaFastPeriod      = 9;      // Fast EMA period (M5 & M1)
@@ -55,14 +55,14 @@ input double   InpMaxImpulseAtrMultiple = 2.5; // Last candle range must be <= A
 input double   InpEmaTouchTolerancePoints = 3; // Tolerance (points) for "touching" EMA9/21 on M1
 
 //--- News filter
-input group "=== News Filter (MQL5 Economic Calendar) ==="
+input group "=== News Filter (MQL5 Economic Calendar) ===";
 input bool     InpUseNewsFilter      = true;   // Enable high-impact USD news blackout
 input int      InpNewsBeforeMinutes  = 30;     // Minutes to block before a high-impact USD event
 input int      InpNewsAfterMinutes   = 30;     // Minutes to block after a high-impact USD event
 input int      InpNewsCacheRefreshMinutes = 15; // How often to refresh cached calendar events
 
 //--- Diagnostics
-input group "=== Diagnostics ==="
+input group "=== Diagnostics ===";
 input bool     InpVerboseDebugLog    = true;   // Print daily skip-reason summary + order failures to the Journal
 input int      InpMinStopBufferPoints = 2;     // Extra buffer added beyond broker's minimum stop/freeze level
 
