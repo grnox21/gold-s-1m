@@ -5,7 +5,7 @@
 //| See docs/SPECIFICATION.md for the full spec this implements.     |
 //+------------------------------------------------------------------+
 #property copyright "gold-s-1m"
-#property version   "1.00"
+#property version   "1.01"
 #property strict
 
 #include <Trade\Trade.mqh>
@@ -61,6 +61,11 @@ input int      InpNewsBeforeMinutes  = 30;     // Minutes to block before a high
 input int      InpNewsAfterMinutes   = 30;     // Minutes to block after a high-impact USD event
 input int      InpNewsCacheRefreshMinutes = 15; // How often to refresh cached calendar events
 
+//--- Diagnostics
+input group "=== Diagnostics ==="
+input bool     InpVerboseDebugLog    = true;   // Print daily skip-reason summary + order failures to the Journal
+input int      InpMinStopBufferPoints = 2;     // Extra buffer added beyond broker's minimum stop/freeze level
+
 CTrade trade;
 
 //--- Indicator handles
@@ -79,6 +84,30 @@ struct NewsEvent
   };
 NewsEvent g_newsCache[];
 datetime  g_newsCacheLastRefresh = 0;
+
+//--- Diagnostic skip-reason counters, tallied per Istanbul trading day and
+//--- printed to the Journal when a new day starts (InpVerboseDebugLog=true).
+//--- Use this to see exactly which filter is rejecting every bar when a
+//--- backtest produces zero (or very few) trades.
+struct DiagCounters
+  {
+   int blockedSession;
+   int blockedSpread;
+   int blockedNews;
+   int blockedHalted;
+   int blockedMaxPositions;
+   int blockedNoTrend;
+   int blockedMomentumMismatch;
+   int blockedAtrLow;
+   int blockedImpulse;
+   int blockedNoPattern;
+   int blockedRsi;
+   int blockedLotInvalid;
+   int ordersAttempted;
+   int ordersFailed;
+   int ordersOpened;
+  };
+DiagCounters g_diag;
 
 //+------------------------------------------------------------------+
 int OnInit()
@@ -101,7 +130,24 @@ int OnInit()
    trade.SetExpertMagicNumber(InpMagicNumber);
    trade.SetDeviationInPoints(20);
 
+   ZeroMemory(g_diag);
    ResetDailyStateIfNeeded(true);
+
+   if(InpVerboseDebugLog)
+     {
+      long stopLevel   = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOP_LEVEL);
+      long freezeLevel = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_FREEZE_LEVEL);
+      Print("Init check | _Point=", DoubleToString(_Point, _Digits),
+            " stopLevel=", stopLevel, "pt freezeLevel=", freezeLevel, "pt",
+            " (TP/SL inputs=", InpTakeProfitPoints, "/", InpStopLossPoints, "pt - ",
+            (MathMax(stopLevel, freezeLevel) >= MathMin(InpTakeProfitPoints, InpStopLossPoints) ?
+             "WILL BE AUTO-WIDENED, see ComputeStopLevels" : "OK, above broker minimum"), ")");
+      Print("Init check | server_time=", TimeToString(TimeCurrent(), TIME_DATE|TIME_MINUTES),
+            " InpBrokerGmtOffset=", InpBrokerGmtOffset,
+            " -> computed Istanbul time=", TimeToString(GetIstanbulTime(), TIME_DATE|TIME_MINUTES),
+            " (verify this matches the real Istanbul clock for your broker's server!)");
+     }
+
    return(INIT_SUCCEEDED);
   }
 
@@ -143,6 +189,28 @@ bool IsWithinTradingSession()
   }
 
 //+------------------------------------------------------------------+
+void PrintDiagSummary()
+  {
+   Print("--- Diagnostic summary for ", TimeToString(g_currentTradingDay, TIME_DATE), " (Istanbul) ---",
+         " session=", g_diag.blockedSession,
+         " spread=", g_diag.blockedSpread,
+         " news=", g_diag.blockedNews,
+         " dailyHalted=", g_diag.blockedHalted,
+         " maxPositions=", g_diag.blockedMaxPositions,
+         " | noTrend=", g_diag.blockedNoTrend,
+         " momentumMismatch=", g_diag.blockedMomentumMismatch,
+         " atrLow=", g_diag.blockedAtrLow,
+         " impulse=", g_diag.blockedImpulse,
+         " noPattern=", g_diag.blockedNoPattern,
+         " rsi=", g_diag.blockedRsi,
+         " lotInvalid=", g_diag.blockedLotInvalid,
+         " | ordersAttempted=", g_diag.ordersAttempted,
+         " ordersFailed=", g_diag.ordersFailed,
+         " ordersOpened=", g_diag.ordersOpened);
+   ZeroMemory(g_diag);
+  }
+
+//+------------------------------------------------------------------+
 //| Reset daily P&L tracking at the start of each new Istanbul day.  |
 //+------------------------------------------------------------------+
 void ResetDailyStateIfNeeded(bool force = false)
@@ -152,11 +220,16 @@ void ResetDailyStateIfNeeded(bool force = false)
 
    if(force || todayStart != g_currentTradingDay)
      {
+      if(!force && InpVerboseDebugLog)
+         PrintDiagSummary();
+
       g_currentTradingDay = todayStart;
       g_dayStartBalance   = AccountInfoDouble(ACCOUNT_BALANCE);
       g_dayTradingHalted  = false;
-      Print("New trading day (Istanbul): ", TimeToString(todayStart, TIME_DATE),
-            " | start balance=", DoubleToString(g_dayStartBalance, 2));
+      if(InpVerboseDebugLog)
+         Print("New trading day (Istanbul): ", TimeToString(todayStart, TIME_DATE),
+               " | server_time=", TimeToString(TimeCurrent(), TIME_DATE|TIME_MINUTES),
+               " | start balance=", DoubleToString(g_dayStartBalance, 2));
      }
   }
 
@@ -452,51 +525,125 @@ double CalculateLotSize()
   }
 
 //+------------------------------------------------------------------+
+//| Widens SL/TP distance up to the broker's minimum stop/freeze     |
+//| level when the requested distance is too tight. Without this,    |
+//| a tight TP/SL (e.g. 10-15 points) below the broker's minimum     |
+//| stop distance makes every OrderSend fail with "Invalid stops"    |
+//| (retcode 130) - the EA looks alive but silently never gets a     |
+//| single trade into the account history.                           |
+//+------------------------------------------------------------------+
+void ComputeStopLevels(bool buySide, double price, double &sl, double &tp)
+  {
+   long stopLevelPoints   = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOP_LEVEL);
+   long freezeLevelPoints = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_FREEZE_LEVEL);
+   long minPoints = MathMax(stopLevelPoints, freezeLevelPoints);
+
+   int slPoints = InpStopLossPoints;
+   int tpPoints = InpTakeProfitPoints;
+
+   if(minPoints > 0)
+     {
+      int required = (int)minPoints + InpMinStopBufferPoints;
+      if(slPoints < required)
+        {
+         if(InpVerboseDebugLog)
+            Print("SL ", slPoints, "pt is inside broker min stop level (", minPoints,
+                  "pt) - widening to ", required, "pt");
+         slPoints = required;
+        }
+      if(tpPoints < required)
+        {
+         if(InpVerboseDebugLog)
+            Print("TP ", tpPoints, "pt is inside broker min stop level (", minPoints,
+                  "pt) - widening to ", required, "pt");
+         tpPoints = required;
+        }
+     }
+
+   sl = buySide ? price - slPoints * _Point : price + slPoints * _Point;
+   tp = buySide ? price + tpPoints * _Point : price - tpPoints * _Point;
+   sl = NormalizeDouble(sl, _Digits);
+   tp = NormalizeDouble(tp, _Digits);
+  }
+
+//+------------------------------------------------------------------+
 void TryOpenEntry()
   {
    if(CountOpenPositions() >= InpMaxOpenPositions)
+     {
+      g_diag.blockedMaxPositions++;
       return;
+     }
 
    int trend = GetTrendM15();
    if(trend == 0)
+     {
+      g_diag.blockedNoTrend++;
       return;
+     }
 
    int momentum = GetMomentumM5();
-   if(momentum != trend)
-      return; // M5 momentum must agree with M15 trend direction
+   if(momentum != trend) // M5 momentum must agree with M15 trend direction
+     {
+      g_diag.blockedMomentumMismatch++;
+      return;
+     }
 
    bool buySide = (trend == 1);
 
    double atrValue = GetIndicatorValue(h_atr_M1, 1);
    double atrPoints;
    if(!IsAtrSufficient(atrPoints))
+     {
+      g_diag.blockedAtrLow++;
       return;
+     }
 
    if(!PassesImpulseFilter(atrValue))
+     {
+      g_diag.blockedImpulse++;
       return;
+     }
 
    if(!IsM1PullbackReversal(buySide, InpEmaTouchTolerancePoints * _Point))
+     {
+      g_diag.blockedNoPattern++;
       return;
+     }
 
    if(!CheckRsiFilter(buySide))
+     {
+      g_diag.blockedRsi++;
       return;
+     }
 
    double lot = CalculateLotSize();
    if(lot <= 0.0)
+     {
+      g_diag.blockedLotInvalid++;
       return;
+     }
 
    double price = buySide ? SymbolInfoDouble(_Symbol, SYMBOL_ASK) : SymbolInfoDouble(_Symbol, SYMBOL_BID);
-   double sl = buySide ? price - InpStopLossPoints * _Point   : price + InpStopLossPoints * _Point;
-   double tp = buySide ? price + InpTakeProfitPoints * _Point : price - InpTakeProfitPoints * _Point;
+   double sl, tp;
+   ComputeStopLevels(buySide, price, sl, tp);
 
-   sl = NormalizeDouble(sl, _Digits);
-   tp = NormalizeDouble(tp, _Digits);
-
+   g_diag.ordersAttempted++;
    bool ok = buySide ? trade.Buy(lot, _Symbol, price, sl, tp, InpTradeComment)
                       : trade.Sell(lot, _Symbol, price, sl, tp, InpTradeComment);
 
    if(!ok)
-      Print("Order failed: ", trade.ResultRetcodeDescription());
+     {
+      g_diag.ordersFailed++;
+      Print("Order failed: retcode=", trade.ResultRetcode(), " (", trade.ResultRetcodeDescription(),
+            ") side=", (buySide ? "BUY" : "SELL"), " lot=", DoubleToString(lot,2),
+            " price=", DoubleToString(price,_Digits), " sl=", DoubleToString(sl,_Digits),
+            " tp=", DoubleToString(tp,_Digits));
+     }
+   else
+     {
+      g_diag.ordersOpened++;
+     }
   }
 
 //+------------------------------------------------------------------+
@@ -573,13 +720,25 @@ void OnTick()
    ManageOpenPositions();
 
    if(g_dayTradingHalted)
+     {
+      g_diag.blockedHalted++;
       return;
+     }
    if(!IsWithinTradingSession())
+     {
+      g_diag.blockedSession++;
       return;
+     }
    if(!IsSpreadAcceptable())
+     {
+      g_diag.blockedSpread++;
       return;
+     }
    if(IsNewsBlackout())
+     {
+      g_diag.blockedNews++;
       return;
+     }
 
    TryOpenEntry();
   }
