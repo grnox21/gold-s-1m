@@ -63,12 +63,12 @@ input int    InpEmaPeriod          = 9;          // EMA period, applied to M1 cl
 // 5. TRADE MANAGEMENT
 //====================================================================
 input group "=== 5. Trade Management ==="
-input double InpTakeProfitUSD       = 13.0;      // Take profit, $ price move (e.g. 13.0 = price moves $13.00 in your favor)
-input double InpStopLossUSD         = 13.0;      // Stop loss, $ price move
-input double InpBreakevenTriggerUSD = 5.0;       // Profit, $ price move, that triggers moving SL to breakeven
-input double InpBreakevenLockUSD    = 1.0;       // $ of extra profit locked in at breakeven (0 = exactly entry price)
-input double InpTrailingStopUSD     = 6.0;       // Trailing stop distance, $ price move (active only after breakeven has fired)
-input double InpTrailingStepUSD     = 1.0;       // Minimum improvement, $ price move, required before the trailing SL is moved again
+input double InpTakeProfitUSD       = 1.30;      // Take profit, $ price move (price +$1.30 in your favor closes the trade)
+input double InpStopLossUSD         = 1.30;      // Stop loss, $ price move (price -$1.30 against you closes the trade) - same $1.30 on both buy and sell
+input double InpBreakevenTriggerUSD = 0.50;      // Profit, $ price move, that triggers moving SL to the entry price
+input double InpBreakevenLockUSD    = 0.0;       // $ of extra profit locked in at breakeven (0 = exactly the entry price, as requested)
+input double InpTrailingStopUSD     = 0.60;      // Trailing stop distance, $ price move (active only after breakeven has fired)
+input double InpTrailingStepUSD     = 0.10;      // Minimum improvement, $ price move, required before the trailing SL is moved again
 
 //====================================================================
 // 6. DAILY PROFIT / LOSS CIRCUIT BREAKER
