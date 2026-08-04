@@ -5,7 +5,7 @@
 //| See docs/SPECIFICATION.md for the full spec this implements.     |
 //+------------------------------------------------------------------+
 #property copyright "gold-s-1m"
-#property version   "1.04"
+#property version   "1.05"
 #property strict
 
 #include <Trade\Trade.mqh>
@@ -26,8 +26,8 @@ input double   InpDailyLossLimitPct    = 10.0; // Daily loss limit (%) -> stop f
 
 //--- Trade management
 input group "=== Trade Management ===";
-input int      InpTakeProfitPoints   = 12;     // Take Profit (points, broker _Point units)
-input int      InpStopLossPoints     = 12;     // Stop Loss (points)
+input int      InpTakeProfitPoints   = 120;    // Take Profit (points, broker _Point units) - range 100-150
+input int      InpStopLossPoints     = 120;    // Stop Loss (points) - range 100-150
 input int      InpBreakevenTriggerPoints = 5;  // Move SL to entry after this much profit (points)
 input int      InpBreakevenBufferPoints  = 1;  // Extra buffer added past entry on breakeven
 input int      InpTrailStartPoints   = 8;      // Start trailing after this much profit (points)
