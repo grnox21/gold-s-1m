@@ -62,8 +62,8 @@ input int    InpEmaPeriod          = 9;          // EMA period, applied to M1 cl
 // 5. TRADE MANAGEMENT
 //====================================================================
 input group "=== 5. Trade Management ==="
-input int    InpTakeProfitPoints   = 130;        // Take profit, points
-input int    InpStopLossPoints     = 130;        // Stop loss, points
+input int    InpTakeProfitPoints   = 13;         // Take profit, points
+input int    InpStopLossPoints     = 13;         // Stop loss, points
 input int    InpBreakevenTrigger   = 50;         // Profit, points, that triggers moving SL to breakeven
 input int    InpBreakevenLockPts   = 2;          // Points of extra profit locked in at breakeven (0 = exactly entry price)
 input int    InpTrailingStopPoints = 60;         // Trailing stop distance, points (active only after breakeven has fired)
