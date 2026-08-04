@@ -5,7 +5,7 @@
 //| See docs/SPECIFICATION.md for the full spec this implements.     |
 //+------------------------------------------------------------------+
 #property copyright "gold-s-1m"
-#property version   "1.03"
+#property version   "1.04"
 #property strict
 
 #include <Trade\Trade.mqh>
@@ -52,7 +52,7 @@ input int      InpAtrPeriod          = 14;     // ATR period (M1)
 input int      InpMinAtrPoints       = 15;     // Minimum ATR (points) required to allow entry - avoids flat markets
 input bool     InpUseImpulseFilter   = true;   // Block entry right after an oversized impulse candle
 input double   InpMaxImpulseAtrMultiple = 2.5; // Last candle range must be <= ATR * this multiple
-input double   InpEmaTouchTolerancePoints = 3; // Tolerance (points) for "touching" EMA9/21 on M1
+input double   InpEmaTouchTolerancePoints = 15; // Tolerance (points) for "touching" EMA9/21 on M1 - widened from 3 (too tight for gold's real M1 range)
 
 //--- News filter
 input group "=== News Filter (MQL5 Economic Calendar) ===";
