@@ -19,8 +19,9 @@ MetaTrader 5 Expert Advisor for fast M1 scalping on XAUUSD (Gold).
 - **Timeframe:** M1 only — entries are evaluated once per confirmed bar close.
 - **Entry:** buy when the closed M1 candle is bullish and closes above EMA(9);
   sell when it's bearish and closes below EMA(9). No other filters/timeframes.
-- **Exits:** fixed TP/SL in points, breakeven once price moves in favor by a
-  configurable distance, then a trailing stop.
+- **Exits:** TP/SL/breakeven/trailing are defined as a straight **$ price
+  move** (e.g. 13.0 = price moves $13.00), not broker points — this keeps
+  the targets identical across brokers regardless of quote digits/point size.
 - **Session:** trades only 11:00–19:00 Istanbul time (GMT+3); open positions
   are still managed outside that window.
 - **Lot sizing:** adjustable cumulative "doubling" table (balance → lot),
@@ -38,7 +39,7 @@ MetaTrader 5 Expert Advisor for fast M1 scalping on XAUUSD (Gold).
 > Note: the news-event blackout filter has been removed from this version —
 > the EA no longer blocks entries around scheduled news events.
 
-Every tunable number from the spec (TP/SL points, breakeven trigger, session
+Every tunable number from the spec (TP/SL $, breakeven trigger, session
 start/end, daily profit/loss %, lot table, max spread, max open trades, etc.)
 is exposed as an `input` parameter — no need to touch the code to tune it.
 

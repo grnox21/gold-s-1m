@@ -9,7 +9,8 @@
 //|   3. Cumulative "doubling" lot-size table                         |
 //|   4. Entry logic: M1 candle direction + EMA(9) position, on the   |
 //|      close of a confirmed bar only (no repainting)                |
-//|   5. Trade management: fixed TP/SL, breakeven, then trailing stop |
+//|   5. Trade management: TP/SL/breakeven/trailing defined as a $    |
+//|      price move (not broker points), then trailing stop           |
 //|   6. Daily profit-target / max-loss circuit breaker               |
 //|   7. Entry-blocking conditions (spread, sideways market, max      |
 //|      concurrent trades, daily stops already hit)                  |
@@ -62,12 +63,12 @@ input int    InpEmaPeriod          = 9;          // EMA period, applied to M1 cl
 // 5. TRADE MANAGEMENT
 //====================================================================
 input group "=== 5. Trade Management ==="
-input int    InpTakeProfitPoints   = 13;         // Take profit, points
-input int    InpStopLossPoints     = 13;         // Stop loss, points
-input int    InpBreakevenTrigger   = 5;          // Profit, points, that triggers moving SL to breakeven
-input int    InpBreakevenLockPts   = 1;          // Points of extra profit locked in at breakeven (0 = exactly entry price)
-input int    InpTrailingStopPoints = 6;          // Trailing stop distance, points (active only after breakeven has fired)
-input int    InpTrailingStepPoints = 1;          // Minimum improvement, points, required before the trailing SL is moved again
+input double InpTakeProfitUSD       = 13.0;      // Take profit, $ price move (e.g. 13.0 = price moves $13.00 in your favor)
+input double InpStopLossUSD         = 13.0;      // Stop loss, $ price move
+input double InpBreakevenTriggerUSD = 5.0;       // Profit, $ price move, that triggers moving SL to breakeven
+input double InpBreakevenLockUSD    = 1.0;       // $ of extra profit locked in at breakeven (0 = exactly entry price)
+input double InpTrailingStopUSD     = 6.0;       // Trailing stop distance, $ price move (active only after breakeven has fired)
+input double InpTrailingStepUSD     = 1.0;       // Minimum improvement, $ price move, required before the trailing SL is moved again
 
 //====================================================================
 // 6. DAILY PROFIT / LOSS CIRCUIT BREAKER
@@ -372,22 +373,24 @@ void TryOpenNewTrade()
    if(!buySignal && !sellSignal)
       return; // no valid signal on this bar
 
-   double lot   = GetLotSize();
-   double point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
+   double lot = GetLotSize();
 
+   // TP/SL are a straight $ price offset (XAUUSD quotes directly in USD per
+   // ounce), not a points/digits count - so no broker point-size conversion
+   // is needed here: a $13.00 target is the same $13.00 on every broker.
    if(buySignal)
    {
       double price = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
-      double sl    = NormalizeDouble(price - InpStopLossPoints   * point, _Digits);
-      double tp    = NormalizeDouble(price + InpTakeProfitPoints * point, _Digits);
+      double sl    = NormalizeDouble(price - InpStopLossUSD, _Digits);
+      double tp    = NormalizeDouble(price + InpTakeProfitUSD, _Digits);
       if(!trade.Buy(lot, _Symbol, price, sl, tp, "GoldScalpM1 buy"))
          Print("Buy order failed. Error: ", GetLastError());
    }
    else // sellSignal
    {
       double price = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-      double sl    = NormalizeDouble(price + InpStopLossPoints   * point, _Digits);
-      double tp    = NormalizeDouble(price - InpTakeProfitPoints * point, _Digits);
+      double sl    = NormalizeDouble(price + InpStopLossUSD, _Digits);
+      double tp    = NormalizeDouble(price - InpTakeProfitUSD, _Digits);
       if(!trade.Sell(lot, _Symbol, price, sl, tp, "GoldScalpM1 sell"))
          Print("Sell order failed. Error: ", GetLastError());
    }
@@ -428,10 +431,15 @@ bool IsSidewaysMarket(double open1, double close1)
 //+------------------------------------------------------------------+
 void ManagePositions()
 {
-   double point      = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
-   int    stopsLevel = (int)SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOPS_LEVEL);
-   double bid        = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-   double ask        = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+   // stopsLevel is the ONE place points still matter: it's a broker-imposed
+   // minimum distance between price and SL, always expressed in points by
+   // the terminal. We convert it to a $ price distance once here so the
+   // rest of the function can stay in plain $ terms.
+   double point           = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
+   int    stopsLevelPts   = (int)SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOPS_LEVEL);
+   double minStopDistance = stopsLevelPts * point;
+   double bid             = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+   double ask             = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
 
    for(int i = PositionsTotal() - 1; i >= 0; i--)
    {
@@ -451,27 +459,27 @@ void ManagePositions()
 
       if(type == POSITION_TYPE_BUY)
       {
-         double profitPts = (bid - openPr) / point;
+         double profitUSD = bid - openPr; // $ the price has moved in our favor
 
-         if(profitPts >= InpBreakevenTrigger)
+         if(profitUSD >= InpBreakevenTriggerUSD)
          {
             bool beActive = (curSL >= openPr); // SL already at/above entry -> breakeven already applied
             if(!beActive)
             {
-               // Move SL to breakeven (entry + a small locked-in profit).
-               double beSL = openPr + InpBreakevenLockPts * point;
+               // Move SL to breakeven (entry + a small locked-in $ profit).
+               double beSL = openPr + InpBreakevenLockUSD;
                if(beSL > curSL) newSL = beSL;
             }
             else
             {
                // Breakeven already active -> trail the stop as price advances further.
-               double trailSL = bid - InpTrailingStopPoints * point;
-               if(trailSL > openPr && trailSL > curSL + InpTrailingStepPoints * point)
+               double trailSL = bid - InpTrailingStopUSD;
+               if(trailSL > openPr && trailSL > curSL + InpTrailingStepUSD)
                   newSL = trailSL;
             }
          }
 
-         if(newSL != curSL && (bid - newSL) / point >= stopsLevel)
+         if(newSL != curSL && (bid - newSL) >= minStopDistance)
          {
             newSL = NormalizeDouble(newSL, _Digits);
             if(!trade.PositionModify(ticket, newSL, curTP) && InpVerboseLogging)
@@ -480,25 +488,25 @@ void ManagePositions()
       }
       else if(type == POSITION_TYPE_SELL)
       {
-         double profitPts = (openPr - ask) / point;
+         double profitUSD = openPr - ask; // $ the price has moved in our favor
 
-         if(profitPts >= InpBreakevenTrigger)
+         if(profitUSD >= InpBreakevenTriggerUSD)
          {
             bool beActive = (curSL > 0 && curSL <= openPr); // SL already at/below entry
             if(!beActive)
             {
-               double beSL = openPr - InpBreakevenLockPts * point;
+               double beSL = openPr - InpBreakevenLockUSD;
                if(curSL == 0 || beSL < curSL) newSL = beSL;
             }
             else
             {
-               double trailSL = ask + InpTrailingStopPoints * point;
-               if(trailSL < openPr && (curSL == 0 || trailSL < curSL - InpTrailingStepPoints * point))
+               double trailSL = ask + InpTrailingStopUSD;
+               if(trailSL < openPr && (curSL == 0 || trailSL < curSL - InpTrailingStepUSD))
                   newSL = trailSL;
             }
          }
 
-         if(newSL != curSL && (newSL - ask) / point >= stopsLevel)
+         if(newSL != curSL && (newSL - ask) >= minStopDistance)
          {
             newSL = NormalizeDouble(newSL, _Digits);
             if(!trade.PositionModify(ticket, newSL, curTP) && InpVerboseLogging)
