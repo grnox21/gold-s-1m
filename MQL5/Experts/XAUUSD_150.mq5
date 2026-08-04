@@ -1,5 +1,5 @@
 //+------------------------------------------------------------------+
-//|                                       XAUUSD_ScalpingEA.mq5      |
+//|                                             XAUUSD_150.mq5       |
 //| XAU/USD M1 scalping EA: M15 trend + M5 momentum + M1 pullback    |
 //| entry, session/news filters, daily profit/loss circuit breaker.  |
 //| See docs/SPECIFICATION.md for the full spec this implements.     |

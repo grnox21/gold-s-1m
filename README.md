@@ -5,11 +5,11 @@
 ## المحتويات
 
 - [`docs/SPECIFICATION.md`](docs/SPECIFICATION.md) — المواصفات الكاملة للاستراتيجية (أوقات التداول، إدارة رأس المال، شروط الدخول/الخروج، فلتر الأخبار، حدود الربح/الخسارة اليومية).
-- [`MQL5/Experts/XAUUSD_ScalpingEA.mq5`](MQL5/Experts/XAUUSD_ScalpingEA.mq5) — الكود المصدري للـ Expert Advisor المطبّق للمواصفات.
+- [`MQL5/Experts/XAUUSD_150.mq5`](MQL5/Experts/XAUUSD_150.mq5) — الكود المصدري للـ Expert Advisor المطبّق للمواصفات.
 
 ## التركيب
 
-1. انسخ ملف `XAUUSD_ScalpingEA.mq5` إلى مجلد `MQL5/Experts/` داخل مجلد بيانات منصة MetaTrader 5 لديك (Data Folder، يظهر عبر File → Open Data Folder داخل MT5).
+1. انسخ ملف `XAUUSD_150.mq5` إلى مجلد `MQL5/Experts/` داخل مجلد بيانات منصة MetaTrader 5 لديك (Data Folder، يظهر عبر File → Open Data Folder داخل MT5).
 2. افتح الملف في MetaEditor وقم بالـ Compile (F7). **لم يتم تجربة الترجمة (Compile) لهذا الكود بعد** لأن بيئة التطوير الحالية لا تحتوي على MetaEditor/مترجم MQL5 — يجب على المستخدم ترجمته أولاً والتأكد من عدم وجود أخطاء قبل أي استخدام.
 3. راجع الإعدادات (Inputs) قبل التشغيل، وبالأخص:
    - `InpBrokerGmtOffset`: يجب ضبطه على فرق توقيت الخادم عن GMT لدى بروكرك.
