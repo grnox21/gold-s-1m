@@ -1,5 +1,5 @@
 //+------------------------------------------------------------------+
-//|                                         GoldScalpingM1_EA.mq5     |
+//|                                               gold fast.mq5       |
 //|                                                                    |
 //| Fast M1 scalping Expert Advisor for XAUUSD (Gold) - MetaTrader 5. |
 //|                                                                    |
