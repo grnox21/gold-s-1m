@@ -28,16 +28,15 @@ MetaTrader 5 Expert Advisor for fast M1 scalping on XAUUSD (Gold).
 - **Daily circuit breaker:** closes everything and stops trading for the rest
   of the day once equity is +20% or −10% versus the day's starting equity
   (reset each day at the 11:00 Istanbul session start).
-- **News filter:** manual list of event timestamps (Istanbul time) with a
-  configurable before/after blackout window — intended as a placeholder for
-  a future economic-calendar feed.
 - **Entry blocking:** max spread, max concurrent trades, and a sideways-market
   filter (candle body vs. recent average range) are all adjustable inputs.
 - **Statistics:** win rate, average win/loss, longest losing streak, and max
   drawdown are printed to the Experts log on removal, plus a per-trade CSV
-  log (flagging trades that closed inside a news blackout window) written to
-  `MQL5/Files/`. `OnTester()` also returns profit/drawdown as a ready-made
-  Strategy Tester optimization criterion.
+  log written to `MQL5/Files/`. `OnTester()` also returns profit/drawdown as
+  a ready-made Strategy Tester optimization criterion.
+
+> Note: the news-event blackout filter has been removed from this version —
+> the EA no longer blocks entries around scheduled news events.
 
 Every tunable number from the spec (TP/SL points, breakeven trigger, session
 start/end, daily profit/loss %, lot table, max spread, max open trades, etc.)
@@ -48,5 +47,4 @@ is exposed as an `input` parameter — no need to touch the code to tune it.
 Before using live, run it in the Strategy Tester on at least one full year of
 M1 XAUUSD tick/history data ("Every tick" or "1 minute OHLC" model) and check
 the Experts-log summary plus the generated CSV for win rate, average win/loss,
-longest losing streak, and max drawdown, including behavior specifically
-around the configured news-blackout windows.
+longest losing streak, and max drawdown.

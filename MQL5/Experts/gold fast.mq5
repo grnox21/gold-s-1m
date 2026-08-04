@@ -11,10 +11,9 @@
 //|      close of a confirmed bar only (no repainting)                |
 //|   5. Trade management: fixed TP/SL, breakeven, then trailing stop |
 //|   6. Daily profit-target / max-loss circuit breaker               |
-//|   7. Manual news-event blackout filter                            |
-//|   8. Additional entry-blocking conditions (spread, sideways       |
-//|      market, max concurrent trades, daily stops already hit)      |
-//|   9. Built-in statistics (win rate, avg win/loss, losing streak,  |
+//|   7. Entry-blocking conditions (spread, sideways market, max      |
+//|      concurrent trades, daily stops already hit)                  |
+//|   8. Built-in statistics (win rate, avg win/loss, losing streak,  |
 //|      drawdown) logged to the Experts tab and to a CSV file so the |
 //|      EA can be evaluated after a Strategy Tester run.             |
 //|                                                                    |
@@ -78,33 +77,20 @@ input double InpDailyProfitTargetPct = 20.0;     // Daily profit target, % of th
 input double InpDailyMaxLossPct      = 10.0;     // Daily max loss, % of the day's starting equity -> close all & stop for the day
 
 //====================================================================
-// 7. NEWS FILTER (manual event list - swap for a calendar feed later)
+// 7. ENTRY BLOCKING CONDITIONS
 //====================================================================
-input group "=== 7. News Filter (manual event list, Istanbul time) ==="
-input bool   InpUseNewsFilter      = true;       // Enable the news blackout filter
-input int    InpNewsBlockBeforeMin = 30;         // Minutes to block new entries BEFORE each news event
-input int    InpNewsBlockAfterMin  = 30;         // Minutes to block new entries AFTER each news event
-input string InpNewsEventTimes     = "";         // Comma separated "YYYY.MM.DD HH:MM" events, Istanbul time
-                                                  // e.g. Fed rate decisions, CPI, NFP, FOMC speeches.
-                                                  // Example: "2026.09.16 21:00,2026.10.02 15:30"
-                                                  // Replace/extend this list manually, or later wire this
-                                                  // input up to an economic-calendar API/feed.
-
-//====================================================================
-// 8. ENTRY BLOCKING CONDITIONS
-//====================================================================
-input group "=== 8. Entry Filters ==="
+input group "=== 7. Entry Filters ==="
 input int    InpMaxSpreadPoints    = 50;         // Max allowed spread, points - blocks new entries above this
 input int    InpMaxOpenTrades      = 1;          // Max simultaneously open trades opened by this EA
 input int    InpRangeAvgBars       = 20;         // Bars used to compute the average range (sideways-market filter)
 input double InpMinBodyRatio       = 0.30;       // Min candle-body / average-range ratio required to accept a signal
 
 //====================================================================
-// 9. STATISTICS / LOGGING (for backtest evaluation)
+// 8. STATISTICS / LOGGING (for backtest evaluation)
 //====================================================================
-input group "=== 9. Statistics / Logging ==="
+input group "=== 8. Statistics / Logging ==="
 input bool   InpPrintStatsOnDeinit = true;       // Print performance summary to the Experts log when EA is removed
-input bool   InpWriteCsvLog        = true;       // Write a per-trade CSV log (win/loss, profit, news-window flag)
+input bool   InpWriteCsvLog        = true;       // Write a per-trade CSV log (win/loss, profit)
 input string InpCsvFileName        = "GoldScalpingM1_EA_trades.csv"; // CSV file name, saved under MQL5\Files
 
 input group "=== Debug ==="
@@ -132,11 +118,7 @@ double   g_lotTableBalances[];
 double   g_lotTableLots[];
 int      g_lotTableCount = 0;
 
-// --- parsed news events -----------------------------------------------
-datetime g_newsTimes[];
-int      g_newsCount = 0;
-
-// --- trade statistics (section 9) --------------------------------------
+// --- trade statistics (section 8) --------------------------------------
 int      g_totalClosedTrades = 0;
 int      g_wins   = 0;
 int      g_losses = 0;
@@ -176,9 +158,6 @@ int OnInit()
    if(InpUseLotTable && g_lotTableCount == 0)
       Print("WARNING: lot table is empty/unparseable - falling back to InpFixedLot.");
 
-   // --- parse the manual news-event list ---
-   g_newsCount = ParseNewsTimes(InpNewsEventTimes, g_newsTimes);
-
    // --- reset all state ---
    g_lastBarTime       = 0;
    g_lastResetDateKey  = "";
@@ -202,7 +181,7 @@ int OnInit()
 
    Print("GoldScalpingM1_EA initialized on ", _Symbol, " M1. Session ",
          InpSessionStartHour, ":", InpSessionStartMinute, " - ",
-         InpSessionEndHour, ":", InpSessionEndMinute, " Istanbul time. News events loaded: ", g_newsCount);
+         InpSessionEndHour, ":", InpSessionEndMinute, " Istanbul time.");
 
    return(INIT_SUCCEEDED);
 }
@@ -227,7 +206,7 @@ void OnTick()
    // 6. Roll the daily counters over at the 11:00 Istanbul session boundary.
    UpdateDailyReset();
 
-   // Keep a running equity high-water-mark / drawdown reading (section 9).
+   // Keep a running equity high-water-mark / drawdown reading (section 8).
    UpdateDrawdownStats();
 
    // Position management (breakeven + trailing stop) always runs, even
@@ -244,7 +223,7 @@ void OnTick()
       return;
 
    if(g_dailyProfitHit || g_dailyLossHit)
-      return; // 6 & 8. today's stop already hit - no more entries today
+      return; // 6 & 7. today's stop already hit - no more entries today
 
    TryOpenNewTrade();
 }
@@ -295,7 +274,7 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
 }
 
 //+------------------------------------------------------------------+
-//| Custom optimization/backtest criterion (section 9): profit per    |
+//| Custom optimization/backtest criterion (section 8): profit per    |
 //| unit of maximum balance drawdown - a simple, robust objective for |
 //| the Strategy Tester's optimizer.                                  |
 //+------------------------------------------------------------------+
@@ -332,21 +311,21 @@ bool IsNewBar()
 }
 
 //+------------------------------------------------------------------+
-//| Runs every entry-blocking check (section 8) and, if all pass,     |
+//| Runs every entry-blocking check (section 7) and, if all pass,     |
 //| evaluates the section-4 candle/EMA signal and opens a trade.      |
 //+------------------------------------------------------------------+
 void TryOpenNewTrade()
 {
    datetime ist = GetIstanbulTime();
 
-   // 8. Trade only within the configured session window.
+   // 7. Trade only within the configured session window.
    if(!IsWithinSession(ist))
    {
       if(InpVerboseLogging) Print("Blocked: outside trading session (Istanbul ", TimeToString(ist, TIME_MINUTES), ")");
       return;
    }
 
-   // 8. Spread filter.
+   // 7. Spread filter.
    long spreadPts = SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
    if(spreadPts > InpMaxSpreadPoints)
    {
@@ -354,17 +333,10 @@ void TryOpenNewTrade()
       return;
    }
 
-   // 8. Max concurrent open trades (this EA only).
+   // 7. Max concurrent open trades (this EA only).
    if(CountOpenPositions() >= InpMaxOpenTrades)
    {
       if(InpVerboseLogging) Print("Blocked: max open trades (", InpMaxOpenTrades, ") reached");
-      return;
-   }
-
-   // 7. News blackout filter.
-   if(InpUseNewsFilter && IsNewsBlocked(ist))
-   {
-      if(InpVerboseLogging) Print("Blocked: inside news blackout window");
       return;
    }
 
@@ -383,7 +355,7 @@ void TryOpenNewTrade()
       return;
    double ema1 = emaBuf[0];
 
-   // 8. Sideways / no-clear-direction filter.
+   // 7. Sideways / no-clear-direction filter.
    if(IsSidewaysMarket(open1, close1))
    {
       if(InpVerboseLogging) Print("Blocked: sideways market (candle body too small vs average range)");
@@ -704,7 +676,7 @@ bool IsWithinSession(datetime ist)
 
 //+------------------------------------------------------------------+
 //| Tracks the running equity high-water-mark and the resulting max   |
-//| drawdown percentage, for the section-9 performance summary.       |
+//| drawdown percentage, for the section-8 performance summary.       |
 //+------------------------------------------------------------------+
 void UpdateDrawdownStats()
 {
@@ -718,29 +690,6 @@ void UpdateDrawdownStats()
       if(dd > g_maxDrawdownPct)
          g_maxDrawdownPct = dd;
    }
-}
-
-//====================================================================
-// SECTION 7: NEWS FILTER
-//====================================================================
-
-//+------------------------------------------------------------------+
-//| True if "ist" falls inside the block window of any manually       |
-//| configured news event (InpNewsBlockBeforeMin before it through     |
-//| InpNewsBlockAfterMin after it).                                    |
-//+------------------------------------------------------------------+
-bool IsNewsBlocked(datetime ist)
-{
-   long beforeSec = (long)InpNewsBlockBeforeMin * 60;
-   long afterSec  = (long)InpNewsBlockAfterMin  * 60;
-
-   for(int i = 0; i < g_newsCount; i++)
-   {
-      long diffSec = (long)(ist - g_newsTimes[i]); // >0 => event already happened
-      if(diffSec >= -beforeSec && diffSec <= afterSec)
-         return true;
-   }
-   return false;
 }
 
 //====================================================================
@@ -773,43 +722,13 @@ int ParseDoubleList(const string s, double &arr[])
    return cnt;
 }
 
-//+------------------------------------------------------------------+
-//| Splits a comma separated list of "YYYY.MM.DD HH:MM" timestamps    |
-//| (Istanbul time) into a datetime array.                            |
-//+------------------------------------------------------------------+
-int ParseNewsTimes(const string s, datetime &arr[])
-{
-   if(StringLen(s) == 0)
-   {
-      ArrayResize(arr, 0);
-      return 0;
-   }
-   string parts[];
-   int n = StringSplit(s, ',', parts);
-   ArrayResize(arr, n);
-   int cnt = 0;
-   for(int i = 0; i < n; i++)
-   {
-      string t = parts[i];
-      StringTrimLeft(t);
-      StringTrimRight(t);
-      if(StringLen(t) == 0) continue;
-      datetime dt = StringToTime(t);
-      if(dt == 0) { Print("WARNING: could not parse news event time '", t, "'"); continue; }
-      arr[cnt++] = dt;
-   }
-   ArrayResize(arr, cnt);
-   return cnt;
-}
-
 //====================================================================
-// SECTION 9: STATISTICS / LOGGING
+// SECTION 8: STATISTICS / LOGGING
 //====================================================================
 
 //+------------------------------------------------------------------+
 //| Appends one row to the CSV trade log (created with a header on    |
-//| the first write). Flags whether the trade closed inside a news    |
-//| blackout window, so news-time performance can be isolated later.  |
+//| the first write).                                                  |
 //+------------------------------------------------------------------+
 void LogTradeToCsv(ulong dealTicket, double profit)
 {
@@ -823,7 +742,7 @@ void LogTradeToCsv(ulong dealTicket, double profit)
 
    FileSeek(handle, 0, SEEK_END);
    if(!fileExisted)
-      FileWrite(handle, "CloseTime", "ClosedSide", "Volume", "Profit", "InNewsWindow");
+      FileWrite(handle, "CloseTime", "ClosedSide", "Volume", "Profit");
 
    datetime closeTime = (datetime)HistoryDealGetInteger(dealTicket, DEAL_TIME);
    ENUM_DEAL_TYPE dealType = (ENUM_DEAL_TYPE)HistoryDealGetInteger(dealTicket, DEAL_TYPE);
@@ -831,19 +750,17 @@ void LogTradeToCsv(ulong dealTicket, double profit)
 
    // The closing deal of a BUY position is a SELL deal, and vice versa.
    string closedSide = (dealType == DEAL_TYPE_SELL) ? "CLOSED_BUY" : "CLOSED_SELL";
-   bool   nearNews    = InpUseNewsFilter && IsNewsBlocked(GetIstanbulTime());
 
    FileWrite(handle,
              TimeToString(closeTime, TIME_DATE | TIME_SECONDS),
              closedSide,
              DoubleToString(vol, 2),
-             DoubleToString(profit, 2),
-             (nearNews ? "1" : "0"));
+             DoubleToString(profit, 2));
    FileClose(handle);
 }
 
 //+------------------------------------------------------------------+
-//| Prints the section-9 performance summary to the Experts log:      |
+//| Prints the section-8 performance summary to the Experts log:      |
 //| win rate, average win/loss, longest losing streak, max drawdown.  |
 //+------------------------------------------------------------------+
 void PrintStatistics()
