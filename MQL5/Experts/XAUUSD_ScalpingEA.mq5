@@ -5,7 +5,7 @@
 //| See docs/SPECIFICATION.md for the full spec this implements.     |
 //+------------------------------------------------------------------+
 #property copyright "gold-s-1m"
-#property version   "1.02"
+#property version   "1.03"
 #property strict
 
 #include <Trade\Trade.mqh>
@@ -135,7 +135,7 @@ int OnInit()
 
    if(InpVerboseDebugLog)
      {
-      long stopLevel   = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOP_LEVEL);
+      long stopLevel   = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOPS_LEVEL);
       long freezeLevel = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_FREEZE_LEVEL);
       Print("Init check | _Point=", DoubleToString(_Point, _Digits),
             " stopLevel=", stopLevel, "pt freezeLevel=", freezeLevel, "pt",
@@ -534,7 +534,7 @@ double CalculateLotSize()
 //+------------------------------------------------------------------+
 void ComputeStopLevels(bool buySide, double price, double &sl, double &tp)
   {
-   long stopLevelPoints   = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOP_LEVEL);
+   long stopLevelPoints   = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOPS_LEVEL);
    long freezeLevelPoints = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_FREEZE_LEVEL);
    long minPoints = MathMax(stopLevelPoints, freezeLevelPoints);
 
