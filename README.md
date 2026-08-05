@@ -44,6 +44,12 @@ MetaTrader 5 Expert Advisor for fast M1 scalping on XAUUSD (Gold).
   drawdown are printed to the Experts log on removal, plus a per-trade CSV
   log written to `MQL5/Files/`. `OnTester()` also returns profit/drawdown as
   a ready-made Strategy Tester optimization criterion.
+- **Signal funnel diagnostics:** the end-of-run summary also breaks down
+  every M1 bar into exactly why it did or didn't become a trade (skipped -
+  daily stop hit, blocked - spread, blocked - max trades, blocked -
+  sideways market, no signal, entries opened). Use this instead of
+  `InpVerboseLogging` (which would flood the log over a year of M1 data)
+  to see which filter is actually suppressing trade count.
 
 > Note: this version has **no trading-hours restriction and no news-event
 > filter** — both were removed by request. The EA can open trades at any

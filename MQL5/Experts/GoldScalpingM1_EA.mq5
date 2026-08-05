@@ -122,6 +122,17 @@ double   g_sumLossProfit = 0;   // stored as a negative number
 int      g_curLossStreak = 0;
 int      g_maxLossStreak = 0;
 
+// --- signal funnel diagnostics: WHY bars didn't turn into a trade ------
+int      g_barsSeen            = 0; // every new M1 bar OnTick evaluated
+int      g_barsSkippedDailyHit = 0; // skipped: today's profit/loss target already hit
+int      g_blockedSpread       = 0; // skipped: spread > InpMaxSpreadUSD
+int      g_blockedMaxTrades    = 0; // skipped: already at InpMaxOpenTrades
+int      g_blockedHistory      = 0; // skipped: not enough bars yet for the filters
+int      g_blockedSideways     = 0; // skipped: sideways-market filter
+int      g_noSignal            = 0; // reached the signal check, but candle/EMA9 didn't align
+int      g_entriesAttempted    = 0; // signal fired, order was sent
+int      g_entriesOpened       = 0; // signal fired, order accepted by the broker
+
 //+------------------------------------------------------------------+
 //| Expert initialization function                                    |
 //+------------------------------------------------------------------+
@@ -166,6 +177,11 @@ int OnInit()
    g_totalClosedTrades = 0; g_wins = 0; g_losses = 0;
    g_sumWinProfit = 0; g_sumLossProfit = 0;
    g_curLossStreak = 0; g_maxLossStreak = 0;
+
+   g_barsSeen = 0; g_barsSkippedDailyHit = 0;
+   g_blockedSpread = 0; g_blockedMaxTrades = 0; g_blockedHistory = 0;
+   g_blockedSideways = 0; g_noSignal = 0;
+   g_entriesAttempted = 0; g_entriesOpened = 0;
 
    // Start each run (e.g. each Strategy Tester pass) with a fresh CSV log.
    if(InpWriteCsvLog && FileIsExist(InpCsvFileName))
@@ -217,8 +233,13 @@ void OnTick()
    if(!IsNewBar())
       return;
 
+   g_barsSeen++; // diagnostics: every confirmed M1 bar we actually evaluate
+
    if(g_dailyProfitHit || g_dailyLossHit)
-      return; // 5 & 6. today's stop already hit - no more entries today
+   {
+      g_barsSkippedDailyHit++; // 5 & 6. today's stop already hit - no more entries today
+      return;
+   }
 
    TryOpenNewTrade();
 }
@@ -317,6 +338,7 @@ void TryOpenNewTrade()
    double spreadUSD = SymbolInfoDouble(_Symbol, SYMBOL_ASK) - SymbolInfoDouble(_Symbol, SYMBOL_BID);
    if(spreadUSD > InpMaxSpreadUSD)
    {
+      g_blockedSpread++;
       if(InpVerboseLogging) Print("Blocked: spread $", DoubleToString(spreadUSD, 2), " > max $", DoubleToString(InpMaxSpreadUSD, 2));
       return;
    }
@@ -324,13 +346,17 @@ void TryOpenNewTrade()
    // 6. Max concurrent open trades (this EA only).
    if(CountOpenPositions() >= InpMaxOpenTrades)
    {
+      g_blockedMaxTrades++;
       if(InpVerboseLogging) Print("Blocked: max open trades (", InpMaxOpenTrades, ") reached");
       return;
    }
 
    // Need enough history for the sideways-market average-range filter and the EMA.
    if(Bars(_Symbol, PERIOD_M1) < InpRangeAvgBars + 3)
+   {
+      g_blockedHistory++;
       return;
+   }
 
    // The just-closed M1 candle (shift 1) - the current bar (shift 0) is still forming.
    double open1  = iOpen(_Symbol, PERIOD_M1, 1);
@@ -340,12 +366,16 @@ void TryOpenNewTrade()
    double emaBuf[];
    ArraySetAsSeries(emaBuf, true);
    if(CopyBuffer(g_emaHandle, 0, 1, 1, emaBuf) != 1)
+   {
+      g_blockedHistory++; // EMA buffer not ready yet - treat like a history gap
       return;
+   }
    double ema1 = emaBuf[0];
 
    // 6. Sideways / no-clear-direction filter.
    if(IsSidewaysMarket(open1, close1))
    {
+      g_blockedSideways++;
       if(InpVerboseLogging) Print("Blocked: sideways market (candle body too small vs average range)");
       return;
    }
@@ -358,9 +388,13 @@ void TryOpenNewTrade()
    bool sellSignal = bearishCandle && (close1 < ema1);
 
    if(!buySignal && !sellSignal)
-      return; // no valid signal on this bar
+   {
+      g_noSignal++; // candle direction and EMA9 position didn't agree on this bar
+      return;
+   }
 
    double lot = GetLotSize();
+   g_entriesAttempted++;
 
    // TP/SL are a straight $ price offset (XAUUSD quotes directly in USD per
    // ounce), not a points/digits count - so no broker point-size conversion
@@ -371,7 +405,10 @@ void TryOpenNewTrade()
       double sl    = NormalizeDouble(price - InpStopLossUSD, _Digits);
       double tp    = NormalizeDouble(price + InpTakeProfitUSD, _Digits);
       if(trade.Buy(lot, _Symbol, price, sl, tp, "GoldScalpM1 buy"))
+      {
          g_dailyTradeCount++; // 7. counts toward InpMinDailyTradesTarget
+         g_entriesOpened++;
+      }
       else
          Print("Buy order failed. Error: ", GetLastError());
    }
@@ -381,7 +418,10 @@ void TryOpenNewTrade()
       double sl    = NormalizeDouble(price + InpStopLossUSD, _Digits);
       double tp    = NormalizeDouble(price - InpTakeProfitUSD, _Digits);
       if(trade.Sell(lot, _Symbol, price, sl, tp, "GoldScalpM1 sell"))
+      {
          g_dailyTradeCount++; // 7. counts toward InpMinDailyTradesTarget
+         g_entriesOpened++;
+      }
       else
          Print("Sell order failed. Error: ", GetLastError());
    }
@@ -762,6 +802,17 @@ void PrintStatistics()
    Print("Longest losing streak   : ", g_maxLossStreak);
    Print("Max equity drawdown     : ", DoubleToString(g_maxDrawdownPct, 2), "%");
    Print("CSV trade log           : ", InpWriteCsvLog ? InpCsvFileName : "(disabled)");
+   Print("=============================================================");
+   Print("----- Signal funnel: WHY bars did/didn't become a trade -----");
+   Print("M1 bars evaluated            : ", g_barsSeen);
+   Print("  - skipped, daily stop hit  : ", g_barsSkippedDailyHit);
+   Print("  - blocked by spread        : ", g_blockedSpread);
+   Print("  - blocked by max trades    : ", g_blockedMaxTrades);
+   Print("  - blocked, not enough hist.: ", g_blockedHistory);
+   Print("  - blocked, sideways market : ", g_blockedSideways);
+   Print("  - no signal (candle/EMA9)  : ", g_noSignal);
+   Print("  - entries attempted        : ", g_entriesAttempted);
+   Print("  - entries actually opened  : ", g_entriesOpened);
    Print("=============================================================");
 }
 //+------------------------------------------------------------------+
