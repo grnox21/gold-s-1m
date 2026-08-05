@@ -52,6 +52,15 @@ input bool   ResetAccountCircuitBreaker  = false;  // Set to true + reload EA to
 input group "=== Trading Window (Istanbul time, GMT+3, no DST) ===";
 input int SessionStartHour = 11;  // Inclusive
 input int SessionEndHour   = 19;  // Exclusive - no NEW entries at/after this hour
+input int BrokerToUTCOffsetHours = 3; // Your broker/server clock's offset from UTC (e.g. server=UTC+3 -> 3, server=UTC -> 0).
+                                       // MUST be set correctly for your broker or the session window will be wrong (this
+                                       // is what caused zero trades before the fix: TimeGMT() is unreliable/returns 0 in
+                                       // the Strategy Tester, so Istanbul time is now derived from TimeCurrent() + this
+                                       // offset instead, which works both live and in backtests). Check your broker's
+                                       // server-time spec; some brokers shift this by 1h with their own DST twice a year.
+
+input group "=== Diagnostics ===";
+input bool LogSkipReasons = false; // Print why an entry was skipped each M1 bar (useful for diagnosing zero-trade runs)
 
 input group "=== News Filter (uses MT5 built-in Economic Calendar) ===";
 input bool UseNewsFilter      = true; // Block new trades around high-impact USD news
@@ -182,23 +191,47 @@ void OnTick()
    // ---- Entry gating (all of these only block NEW entries; existing positions
    //      keep their broker-side SL/TP and are managed regardless) ----
    if(g_accountCircuitBreakerTriggered)
+   {
+      if(LogSkipReasons) Print("Skip: account circuit breaker is active.");
       return; // account-level breaker: no auto-resume, ever
+   }
 
    if(g_dailyTradingDisabled)
+   {
+      if(LogSkipReasons) Print("Skip: daily trading disabled (profit target / loss cap / consecutive-loss breaker).");
       return; // daily profit target / loss cap / consecutive-loss breaker already hit today
+   }
 
    if(OnePositionAtATime && PositionSelect(_Symbol))
+   {
+      if(LogSkipReasons) Print("Skip: a position is already open (OnePositionAtATime=true).");
       return;
+   }
 
    if(!TradingWindowFilter())
+   {
+      if(LogSkipReasons)
+      {
+         MqlDateTime dbg; TimeToStruct(GetIstanbulTime(), dbg);
+         Print("Skip: outside trading window. Computed Istanbul hour=", dbg.hour,
+               " (window is ", SessionStartHour, "-", SessionEndHour, "). ",
+               "If this looks wrong, check BrokerToUTCOffsetHours against your broker's server time.");
+      }
       return; // outside 11:00-19:00 Istanbul time
+   }
 
    if(NewsFilter())
+   {
+      if(LogSkipReasons) Print("Skip: inside a high-impact USD news blackout window.");
       return; // inside a high-impact USD news blackout window
+   }
 
    int trend = GetTrendFilter();
    if(trend == TREND_NONE)
+   {
+      if(LogSkipReasons) Print("Skip: no trend (price == EMA200 or EMA/price unavailable).");
       return;
+   }
 
    double sweptLevel = 0.0, sweepExtreme = 0.0;
    datetime sweepBarTime = 0;
@@ -211,6 +244,8 @@ void OnTick()
       {
          TryEnterTrade(ORDER_TYPE_BUY, sweepExtreme);
       }
+      else if(LogSkipReasons)
+         Print("Skip: uptrend, no confirmed buy-side sweep+reversal this bar. swingLow=", g_swingLow);
    }
    else if(trend == TREND_DOWN)
    {
@@ -220,6 +255,8 @@ void OnTick()
       {
          TryEnterTrade(ORDER_TYPE_SELL, sweepExtreme);
       }
+      else if(LogSkipReasons)
+         Print("Skip: downtrend, no confirmed sell-side sweep+reversal this bar. swingHigh=", g_swingHigh);
    }
 }
 
@@ -450,11 +487,21 @@ int GetTrendFilter()
 // Only new entries are gated by the session window; already-open trades
 // keep their broker-side SL/TP and continue to be managed 24/7.
 // Istanbul (Turkey) has been fixed at GMT+3 year-round since 2016
-// (no DST), so we don't need any seasonal offset logic.
+// (no DST), so we don't need any seasonal offset logic on the Istanbul
+// side. We DO need the broker's UTC offset, however - and deliberately
+// do NOT use TimeGMT() for that: TimeGMT() depends on a live GMT sync
+// that is not available against historical data, so in the Strategy
+// Tester it returns 0 the entire run. That silently made this filter
+// permanently false (a fixed, wrong hour never inside the session),
+// which is exactly what caused a full-year backtest to take zero
+// trades. TimeCurrent() (the broker/server clock) is reliable in both
+// live trading and the tester, so we derive Istanbul time from that
+// plus the user-supplied BrokerToUTCOffsetHours input instead.
 //====================================================================
 datetime GetIstanbulTime()
 {
-   return TimeGMT() + 3 * 3600;
+   datetime utc = TimeCurrent() - BrokerToUTCOffsetHours * 3600;
+   return utc + 3 * 3600;
 }
 
 bool TradingWindowFilter()

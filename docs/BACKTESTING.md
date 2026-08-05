@@ -10,6 +10,38 @@
 > losses, max drawdown, circuit-breaker counts) — it does not invent
 > numbers on its own.
 
+## 0. Known gotcha: set `BrokerToUTCOffsetHours` before you run anything
+
+An earlier version of this EA computed the Istanbul trading-window time
+using `TimeGMT()`. That function depends on a live GMT sync that isn't
+available against historical data, so **inside the Strategy Tester it
+returns 0 for the whole run** — silently pinning the "Istanbul hour" to
+a fixed, wrong value that never falls inside 11:00–19:00. The result was
+a hard block on every single tick: **zero trades across an entire
+year**, not a rare-setup issue.
+
+This is now fixed: Istanbul time is derived from `TimeCurrent()`
+(broker/server time, reliable in both live and the tester) plus the
+`BrokerToUTCOffsetHours` input. **You must set this input to your
+broker's actual server-clock offset from UTC** before running any
+test:
+
+1. Open a chart, hover the crosshair/status bar, or check your broker's
+   "server time" spec page (some brokers state it directly, e.g.
+   "server time = UTC+3" or "EET/EEST").
+2. Compare the terminal's current bar/quote time to real UTC — the
+   difference in whole hours is your offset.
+3. Set `BrokerToUTCOffsetHours` to that value (default `3`, a common
+   setting for gold/forex brokers running EET server time — verify it
+   for yours, and note some brokers shift it ±1h with their own DST
+   twice a year, so re-check around March/October if that applies).
+
+If you still get zero (or suspiciously few) trades after setting this
+correctly, turn on the `LogSkipReasons` input and re-run — the Experts
+log will print exactly which gate (window, news, trend, no
+sweep/reversal, etc.) is blocking entry on every bar, in the tester's
+Journal tab.
+
 ## 1. Get one full year of XAUUSD M1 data
 
 1. In MT5: **View → Symbols → XAUUSD**, or use your broker's own gold
