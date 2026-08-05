@@ -73,7 +73,7 @@ input double InpDailyMaxLossPct      = 10.0;     // Daily max loss, % of the day
 // 6. ENTRY BLOCKING CONDITIONS
 //====================================================================
 input group "=== 6. Entry Filters ==="
-input int    InpMaxSpreadPoints    = 50;         // Max allowed spread, points - blocks new entries above this
+input double InpMaxSpreadUSD       = 0.50;       // Max allowed spread, $ price gap (Ask-Bid) - blocks new entries above this. Was broker "points" before, which on a 3-digit XAUUSD account could silently mean 200-300+ points and block almost every bar - this is now broker-independent like TP/SL.
 input int    InpMaxOpenTrades      = 10;         // Max simultaneously open trades opened by this EA (raised so signals aren't blocked while a previous trade is still open - needed to hit high daily trade counts)
 input int    InpRangeAvgBars       = 20;         // Bars used to compute the average range (sideways-market filter)
 input double InpMinBodyRatio       = 0.05;       // Min candle-body / average-range ratio required to accept a signal (loosened so most directional candles qualify, for higher trade frequency)
@@ -312,11 +312,12 @@ bool IsNewBar()
 //+------------------------------------------------------------------+
 void TryOpenNewTrade()
 {
-   // 6. Spread filter.
-   long spreadPts = SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
-   if(spreadPts > InpMaxSpreadPoints)
+   // 6. Spread filter - computed as a straight $ gap (Ask-Bid), not points,
+   // so it behaves identically regardless of the broker's quote digits.
+   double spreadUSD = SymbolInfoDouble(_Symbol, SYMBOL_ASK) - SymbolInfoDouble(_Symbol, SYMBOL_BID);
+   if(spreadUSD > InpMaxSpreadUSD)
    {
-      if(InpVerboseLogging) Print("Blocked: spread ", spreadPts, " > max ", InpMaxSpreadPoints);
+      if(InpVerboseLogging) Print("Blocked: spread $", DoubleToString(spreadUSD, 2), " > max $", DoubleToString(InpMaxSpreadUSD, 2));
       return;
    }
 
