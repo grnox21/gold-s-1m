@@ -20,15 +20,15 @@ MetaTrader 5 Expert Advisor for fast M1 scalping on XAUUSD (Gold).
 - **Entry:** buy when the closed M1 candle is bullish and closes above EMA(9);
   sell when it's bearish and closes below EMA(9). No other filters/timeframes.
 - **Exits:** TP/SL/breakeven/trailing are defined as a straight **$ price
-  move** (e.g. 13.0 = price moves $13.00), not broker points — this keeps
+  move** (e.g. 1.30 = price moves $1.30), not broker points — this keeps
   the targets identical across brokers regardless of quote digits/point size.
-- **Session:** trades only 11:00–19:00 Istanbul time (GMT+3); open positions
-  are still managed outside that window.
+  Defaults: TP/SL $1.30, breakeven at +$0.50 profit (moves SL exactly to
+  entry), then trailing $0.60/$0.10 step.
 - **Lot sizing:** adjustable cumulative "doubling" table (balance → lot),
   configurable via input strings, not hardcoded.
 - **Daily circuit breaker:** closes everything and stops trading for the rest
   of the day once equity is +20% or −10% versus the day's starting equity
-  (reset each day at the 11:00 Istanbul session start).
+  (reset at the start of each new server calendar day).
 - **Entry blocking:** max spread, max concurrent trades, and a sideways-market
   filter (candle body vs. recent average range) are all adjustable inputs.
 - **Statistics:** win rate, average win/loss, longest losing streak, and max
@@ -36,11 +36,12 @@ MetaTrader 5 Expert Advisor for fast M1 scalping on XAUUSD (Gold).
   log written to `MQL5/Files/`. `OnTester()` also returns profit/drawdown as
   a ready-made Strategy Tester optimization criterion.
 
-> Note: the news-event blackout filter has been removed from this version —
-> the EA no longer blocks entries around scheduled news events.
+> Note: this version has **no trading-hours restriction and no news-event
+> filter** — both were removed by request. The EA can open trades at any
+> time of day, on any M1 candle that satisfies the entry signal.
 
-Every tunable number from the spec (TP/SL $, breakeven trigger, session
-start/end, daily profit/loss %, lot table, max spread, max open trades, etc.)
+Every tunable number from the spec (TP/SL $, breakeven trigger, daily
+profit/loss %, lot table, max spread, max open trades, etc.)
 is exposed as an `input` parameter — no need to touch the code to tune it.
 
 ## Backtesting

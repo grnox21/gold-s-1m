@@ -5,18 +5,21 @@
 //|                                                                    |
 //| Strategy summary (see numbered sections below for full spec):     |
 //|   1. General settings / symbol / risk switches                    |
-//|   2. Trading session filter (Istanbul time, GMT+3)                |
-//|   3. Cumulative "doubling" lot-size table                         |
-//|   4. Entry logic: M1 candle direction + EMA(9) position, on the   |
+//|   2. Cumulative "doubling" lot-size table                         |
+//|   3. Entry logic: M1 candle direction + EMA(9) position, on the   |
 //|      close of a confirmed bar only (no repainting)                |
-//|   5. Trade management: TP/SL/breakeven/trailing defined as a $    |
+//|   4. Trade management: TP/SL/breakeven/trailing defined as a $    |
 //|      price move (not broker points), then trailing stop           |
-//|   6. Daily profit-target / max-loss circuit breaker               |
-//|   7. Entry-blocking conditions (spread, sideways market, max      |
+//|   5. Daily profit-target / max-loss circuit breaker               |
+//|   6. Entry-blocking conditions (spread, sideways market, max      |
 //|      concurrent trades, daily stops already hit)                  |
-//|   8. Built-in statistics (win rate, avg win/loss, losing streak,  |
+//|   7. Built-in statistics (win rate, avg win/loss, losing streak,  |
 //|      drawdown) logged to the Experts tab and to a CSV file so the |
 //|      EA can be evaluated after a Strategy Tester run.             |
+//|                                                                    |
+//| No trading-hours restriction and no news-event filter: the EA can |
+//| open trades at any time, on any M1 candle that satisfies the      |
+//| entry signal.                                                     |
 //|                                                                    |
 //| All numeric parameters are exposed as inputs - no magic numbers   |
 //| are hardcoded in the trading logic itself.                        |
@@ -34,35 +37,24 @@ input ulong  InpMagicNumber        = 20260804;   // Magic number (identifies thi
 input int    InpSlippagePoints     = 20;         // Max allowed slippage / deviation, points
 
 //====================================================================
-// 2. TRADING SESSION (Istanbul time, GMT+3, no DST since 2016)
+// 2. LOT SIZING (MONEY MANAGEMENT) - cumulative doubling table
 //====================================================================
-input group "=== 2. Trading Session (Istanbul time) ==="
-input int    InpSessionStartHour   = 11;         // Session start hour   (Istanbul, 24h)
-input int    InpSessionStartMinute = 0;          // Session start minute (Istanbul)
-input int    InpSessionEndHour     = 19;         // Session end hour     (Istanbul, 24h)
-input int    InpSessionEndMinute   = 0;          // Session end minute   (Istanbul)
-input int    InpIstanbulUtcOffset  = 3;          // Istanbul UTC offset, hours (fixed +3)
-input int    InpBrokerUtcOffset    = 0;          // Broker/server time UTC offset, hours - SET THIS per your broker!
-
-//====================================================================
-// 3. LOT SIZING (MONEY MANAGEMENT) - cumulative doubling table
-//====================================================================
-input group "=== 3. Lot Sizing Table ==="
+input group "=== 2. Lot Sizing Table ==="
 input bool   InpUseLotTable        = true;       // true = use balance table below, false = always use InpFixedLot
 input double InpFixedLot           = 0.01;       // Lot used when InpUseLotTable = false
 input string InpLotTableBalances   = "50,100,200,400,800,1600,3200,6400,12800,25600"; // Balance thresholds ($), ascending, comma separated
 input string InpLotTableLots       = "0.01,0.02,0.04,0.08,0.16,0.32,0.64,1.28,2.56,5.12"; // Lot for each threshold above (same order/count)
 
 //====================================================================
-// 4. ENTRY LOGIC (M1 candle direction + EMA9) - no other filters/timeframes
+// 3. ENTRY LOGIC (M1 candle direction + EMA9) - no other filters/timeframes
 //====================================================================
-input group "=== 4. Entry Logic (M1, EMA) ==="
+input group "=== 3. Entry Logic (M1, EMA) ==="
 input int    InpEmaPeriod          = 9;          // EMA period, applied to M1 close price
 
 //====================================================================
-// 5. TRADE MANAGEMENT
+// 4. TRADE MANAGEMENT
 //====================================================================
-input group "=== 5. Trade Management ==="
+input group "=== 4. Trade Management ==="
 input double InpTakeProfitUSD       = 1.30;      // Take profit, $ price move (price +$1.30 in your favor closes the trade)
 input double InpStopLossUSD         = 1.30;      // Stop loss, $ price move (price -$1.30 against you closes the trade) - same $1.30 on both buy and sell
 input double InpBreakevenTriggerUSD = 0.50;      // Profit, $ price move, that triggers moving SL to the entry price
@@ -71,25 +63,25 @@ input double InpTrailingStopUSD     = 0.60;      // Trailing stop distance, $ pr
 input double InpTrailingStepUSD     = 0.10;      // Minimum improvement, $ price move, required before the trailing SL is moved again
 
 //====================================================================
-// 6. DAILY PROFIT / LOSS CIRCUIT BREAKER
+// 5. DAILY PROFIT / LOSS CIRCUIT BREAKER
 //====================================================================
-input group "=== 6. Daily Profit / Loss Rules ==="
+input group "=== 5. Daily Profit / Loss Rules ==="
 input double InpDailyProfitTargetPct = 20.0;     // Daily profit target, % of the day's starting equity -> close all & stop for the day
 input double InpDailyMaxLossPct      = 10.0;     // Daily max loss, % of the day's starting equity -> close all & stop for the day
 
 //====================================================================
-// 7. ENTRY BLOCKING CONDITIONS
+// 6. ENTRY BLOCKING CONDITIONS
 //====================================================================
-input group "=== 7. Entry Filters ==="
+input group "=== 6. Entry Filters ==="
 input int    InpMaxSpreadPoints    = 50;         // Max allowed spread, points - blocks new entries above this
 input int    InpMaxOpenTrades      = 1;          // Max simultaneously open trades opened by this EA
 input int    InpRangeAvgBars       = 20;         // Bars used to compute the average range (sideways-market filter)
 input double InpMinBodyRatio       = 0.30;       // Min candle-body / average-range ratio required to accept a signal
 
 //====================================================================
-// 8. STATISTICS / LOGGING (for backtest evaluation)
+// 7. STATISTICS / LOGGING (for backtest evaluation)
 //====================================================================
-input group "=== 8. Statistics / Logging ==="
+input group "=== 7. Statistics / Logging ==="
 input bool   InpPrintStatsOnDeinit = true;       // Print performance summary to the Experts log when EA is removed
 input bool   InpWriteCsvLog        = true;       // Write a per-trade CSV log (win/loss, profit)
 input string InpCsvFileName        = "GoldScalpingM1_EA_trades.csv"; // CSV file name, saved under MQL5\Files
@@ -106,7 +98,7 @@ datetime g_lastBarTime = 0;        // time of the last M1 bar we already evaluat
 
 // --- daily circuit breaker state -----------------------------------
 string   g_lastResetDateKey = "";  // "YYYY.MM.DD" of the last day the daily counters were reset
-double   g_dailyStartEquity = 0;   // equity at the start of the current trading day (11:00 Istanbul)
+double   g_dailyStartEquity = 0;   // equity at the start of the current (server) calendar day
 bool     g_dailyProfitHit   = false;
 bool     g_dailyLossHit     = false;
 
@@ -119,7 +111,7 @@ double   g_lotTableBalances[];
 double   g_lotTableLots[];
 int      g_lotTableCount = 0;
 
-// --- trade statistics (section 8) --------------------------------------
+// --- trade statistics (section 7) --------------------------------------
 int      g_totalClosedTrades = 0;
 int      g_wins   = 0;
 int      g_losses = 0;
@@ -180,9 +172,8 @@ int OnInit()
       Print("WARNING: chart symbol '", _Symbol, "' does not look like Gold (XAU...). ",
             "This EA is designed for XAUUSD.");
 
-   Print("GoldScalpingM1_EA initialized on ", _Symbol, " M1. Session ",
-         InpSessionStartHour, ":", InpSessionStartMinute, " - ",
-         InpSessionEndHour, ":", InpSessionEndMinute, " Istanbul time.");
+   Print("GoldScalpingM1_EA initialized on ", _Symbol, " M1. No trading-hours restriction - ",
+         "entries are allowed at any time the signal fires.");
 
    return(INIT_SUCCEEDED);
 }
@@ -204,18 +195,18 @@ void OnDeinit(const int reason)
 //+------------------------------------------------------------------+
 void OnTick()
 {
-   // 6. Roll the daily counters over at the 11:00 Istanbul session boundary.
+   // 5. Roll the daily counters over at each new server calendar day.
    UpdateDailyReset();
 
-   // Keep a running equity high-water-mark / drawdown reading (section 8).
+   // Keep a running equity high-water-mark / drawdown reading (section 7).
    UpdateDrawdownStats();
 
    // Position management (breakeven + trailing stop) always runs, even
-   // outside the trading session and even after the daily stop has fired -
-   // open trades must still be protected (spec section 2 & 6).
+   // after the daily stop has fired - open trades must still be protected
+   // (spec section 5).
    ManagePositions();
 
-   // 6. Daily profit-target / max-loss circuit breaker.
+   // 5. Daily profit-target / max-loss circuit breaker.
    CheckDailyStops();
 
    // Only look for a new entry once per confirmed M1 bar close - never
@@ -224,7 +215,7 @@ void OnTick()
       return;
 
    if(g_dailyProfitHit || g_dailyLossHit)
-      return; // 6 & 7. today's stop already hit - no more entries today
+      return; // 5 & 6. today's stop already hit - no more entries today
 
    TryOpenNewTrade();
 }
@@ -275,7 +266,7 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
 }
 
 //+------------------------------------------------------------------+
-//| Custom optimization/backtest criterion (section 8): profit per    |
+//| Custom optimization/backtest criterion (section 7): profit per    |
 //| unit of maximum balance drawdown - a simple, robust objective for |
 //| the Strategy Tester's optimizer.                                  |
 //+------------------------------------------------------------------+
@@ -289,7 +280,7 @@ double OnTester()
 }
 
 //====================================================================
-// SECTION 4: ENTRY LOGIC
+// SECTION 3: ENTRY LOGIC
 //====================================================================
 
 //+------------------------------------------------------------------+
@@ -312,21 +303,13 @@ bool IsNewBar()
 }
 
 //+------------------------------------------------------------------+
-//| Runs every entry-blocking check (section 7) and, if all pass,     |
-//| evaluates the section-4 candle/EMA signal and opens a trade.      |
+//| Runs every entry-blocking check (section 6) and, if all pass,     |
+//| evaluates the section-3 candle/EMA signal and opens a trade.      |
+//| No trading-hours restriction - can fire at any time of day.       |
 //+------------------------------------------------------------------+
 void TryOpenNewTrade()
 {
-   datetime ist = GetIstanbulTime();
-
-   // 7. Trade only within the configured session window.
-   if(!IsWithinSession(ist))
-   {
-      if(InpVerboseLogging) Print("Blocked: outside trading session (Istanbul ", TimeToString(ist, TIME_MINUTES), ")");
-      return;
-   }
-
-   // 7. Spread filter.
+   // 6. Spread filter.
    long spreadPts = SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
    if(spreadPts > InpMaxSpreadPoints)
    {
@@ -334,7 +317,7 @@ void TryOpenNewTrade()
       return;
    }
 
-   // 7. Max concurrent open trades (this EA only).
+   // 6. Max concurrent open trades (this EA only).
    if(CountOpenPositions() >= InpMaxOpenTrades)
    {
       if(InpVerboseLogging) Print("Blocked: max open trades (", InpMaxOpenTrades, ") reached");
@@ -356,14 +339,14 @@ void TryOpenNewTrade()
       return;
    double ema1 = emaBuf[0];
 
-   // 7. Sideways / no-clear-direction filter.
+   // 6. Sideways / no-clear-direction filter.
    if(IsSidewaysMarket(open1, close1))
    {
       if(InpVerboseLogging) Print("Blocked: sideways market (candle body too small vs average range)");
       return;
    }
 
-   // 4. Core entry signal - pure M1 candle direction + EMA9 position, nothing else.
+   // 3. Core entry signal - pure M1 candle direction + EMA9 position, nothing else.
    bool bullishCandle = (close1 > open1);
    bool bearishCandle = (close1 < open1);
 
@@ -377,7 +360,7 @@ void TryOpenNewTrade()
 
    // TP/SL are a straight $ price offset (XAUUSD quotes directly in USD per
    // ounce), not a points/digits count - so no broker point-size conversion
-   // is needed here: a $13.00 target is the same $13.00 on every broker.
+   // is needed here: a $1.30 target is the same $1.30 on every broker.
    if(buySignal)
    {
       double price = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
@@ -420,14 +403,13 @@ bool IsSidewaysMarket(double open1, double close1)
 }
 
 //====================================================================
-// SECTION 5: TRADE MANAGEMENT (breakeven + trailing stop)
+// SECTION 4: TRADE MANAGEMENT (breakeven + trailing stop)
 //====================================================================
 
 //+------------------------------------------------------------------+
 //| Applies breakeven and trailing-stop logic to every open position  |
-//| belonging to this EA on this symbol. Runs on every tick,          |
-//| independent of the trading session, so open trades stay protected |
-//| even outside 11:00-19:00 Istanbul.                                |
+//| belonging to this EA on this symbol. Runs on every tick, even     |
+//| after the daily stop has fired, so open trades stay protected.    |
 //+------------------------------------------------------------------+
 void ManagePositions()
 {
@@ -554,7 +536,7 @@ void CloseAllPositions()
 }
 
 //====================================================================
-// SECTION 3: LOT SIZING
+// SECTION 2: LOT SIZING
 //====================================================================
 
 //+------------------------------------------------------------------+
@@ -595,32 +577,29 @@ double GetLotSize()
 }
 
 //====================================================================
-// SECTION 6: DAILY PROFIT / LOSS CIRCUIT BREAKER
+// SECTION 5: DAILY PROFIT / LOSS CIRCUIT BREAKER
 //====================================================================
 
 //+------------------------------------------------------------------+
 //| Resets the daily start-of-day equity and the daily hit-flags      |
-//| exactly once, on the first tick after the session start time      |
-//| (11:00 Istanbul by default) on each new calendar day.             |
+//| exactly once, on the first tick of each new server calendar day.  |
+//| (There is no trading-hours restriction anymore, so "day" here is  |
+//| simply the broker/server calendar date rolling over.)             |
 //+------------------------------------------------------------------+
 void UpdateDailyReset()
 {
-   datetime ist = GetIstanbulTime();
    MqlDateTime dt;
-   TimeToStruct(ist, dt);
-
-   int curMin   = dt.hour * 60 + dt.min;
-   int startMin = InpSessionStartHour * 60 + InpSessionStartMinute;
+   TimeToStruct(TimeCurrent(), dt);
    string todayKey = StringFormat("%04d.%02d.%02d", dt.year, dt.mon, dt.day);
 
-   if(curMin >= startMin && todayKey != g_lastResetDateKey)
+   if(todayKey != g_lastResetDateKey)
    {
       g_lastResetDateKey = todayKey;
       g_dailyStartEquity = AccountInfoDouble(ACCOUNT_EQUITY);
       g_dailyProfitHit   = false;
       g_dailyLossHit     = false;
-      Print("New trading day started (Istanbul ", TimeToString(ist, TIME_DATE | TIME_MINUTES),
-            "). Day-start equity = ", DoubleToString(g_dailyStartEquity, 2));
+      Print("New trading day started (", todayKey, "). Day-start equity = ",
+            DoubleToString(g_dailyStartEquity, 2));
    }
 }
 
@@ -655,36 +634,12 @@ void CheckDailyStops()
 }
 
 //====================================================================
-// SECTION 2: SESSION / TIME HELPERS
+// DRAWDOWN TRACKING HELPER
 //====================================================================
 
 //+------------------------------------------------------------------+
-//| Converts the broker/server clock (TimeCurrent) into Istanbul      |
-//| local time using the two UTC-offset inputs. Istanbul has been on  |
-//| a fixed UTC+3 (no DST) since 2016.                                 |
-//+------------------------------------------------------------------+
-datetime GetIstanbulTime()
-{
-   return TimeCurrent() + (InpIstanbulUtcOffset - InpBrokerUtcOffset) * 3600;
-}
-
-//+------------------------------------------------------------------+
-//| True if the given Istanbul time falls inside the configured       |
-//| trading session window [start, end).                              |
-//+------------------------------------------------------------------+
-bool IsWithinSession(datetime ist)
-{
-   MqlDateTime dt;
-   TimeToStruct(ist, dt);
-   int curMin   = dt.hour * 60 + dt.min;
-   int startMin = InpSessionStartHour * 60 + InpSessionStartMinute;
-   int endMin   = InpSessionEndHour   * 60 + InpSessionEndMinute;
-   return (curMin >= startMin && curMin < endMin);
-}
-
-//+------------------------------------------------------------------+
 //| Tracks the running equity high-water-mark and the resulting max   |
-//| drawdown percentage, for the section-8 performance summary.       |
+//| drawdown percentage, for the section-7 performance summary.       |
 //+------------------------------------------------------------------+
 void UpdateDrawdownStats()
 {
@@ -731,7 +686,7 @@ int ParseDoubleList(const string s, double &arr[])
 }
 
 //====================================================================
-// SECTION 8: STATISTICS / LOGGING
+// SECTION 7: STATISTICS / LOGGING
 //====================================================================
 
 //+------------------------------------------------------------------+
@@ -768,7 +723,7 @@ void LogTradeToCsv(ulong dealTicket, double profit)
 }
 
 //+------------------------------------------------------------------+
-//| Prints the section-8 performance summary to the Experts log:      |
+//| Prints the section-7 performance summary to the Experts log:      |
 //| win rate, average win/loss, longest losing streak, max drawdown.  |
 //+------------------------------------------------------------------+
 void PrintStatistics()
