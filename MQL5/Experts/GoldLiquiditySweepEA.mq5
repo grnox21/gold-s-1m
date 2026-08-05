@@ -104,6 +104,34 @@ int      g_statConsecutiveLossBreakerHits = 0;
 bool     g_statAccountBreakerTriggered    = false;
 datetime g_statAccountBreakerTime         = 0;
 
+// --- Diagnostic funnel counters: shows exactly how many M1 bars made it past
+//     each gate, so a zero/low-trade run can be root-caused from the log
+//     instead of guessed at. Always printed at the end of a run (OnDeinit /
+//     OnTester), independent of the LogSkipReasons input. ---
+long g_dbgBarsEvaluated = 0;
+long g_dbgSkipAccountCB = 0;
+long g_dbgSkipDaily     = 0;
+long g_dbgSkipPosOpen   = 0;
+long g_dbgSkipWindow    = 0;
+long g_dbgWindowOpen    = 0;
+long g_dbgSkipNews      = 0;
+long g_dbgNewsClear     = 0;
+long g_dbgTrendNone     = 0;
+long g_dbgTrendUp       = 0;
+long g_dbgTrendDown     = 0;
+long g_dbgSweepUp       = 0;
+long g_dbgSweepDown     = 0;
+long g_dbgReversalUp    = 0;
+long g_dbgReversalDown  = 0;
+long g_dbgEntryAttempts = 0;
+long g_dbgRejectSpread  = 0;
+long g_dbgRejectStops   = 0;
+long g_dbgRejectLot     = 0;
+long g_dbgRejectSend    = 0;
+long g_dbgOrdersSent    = 0;
+datetime g_dbgFirstSwingHighTime = 0;
+datetime g_dbgFirstSwingLowTime  = 0;
+
 #define TREND_UP   1
 #define TREND_DOWN -1
 #define TREND_NONE 0
@@ -169,8 +197,90 @@ int OnInit()
 
 void OnDeinit(const int reason)
 {
+   PrintDiagnosticsSummary();
+
    if(g_emaHandle != INVALID_HANDLE)
       IndicatorRelease(g_emaHandle);
+}
+
+//====================================================================
+// PrintDiagnosticsSummary()
+// -------------------------------------------------------------------
+// Prints an entry funnel: how many M1 bars made it past each gate, all
+// the way down to orders actually sent. Always runs at the end of a
+// run (OnDeinit covers live/demo AND the tester) regardless of the
+// LogSkipReasons input, specifically so a zero/low-trade backtest can
+// be root-caused straight from the Journal without re-running anything.
+//====================================================================
+void PrintDiagnosticsSummary()
+{
+   string s = "";
+   s += "=========== GoldLiquiditySweepEA DIAGNOSTIC FUNNEL ===========\r\n";
+   s += StringFormat("M1 bars evaluated             : %d\r\n", g_dbgBarsEvaluated);
+   s += StringFormat("  skipped - account breaker    : %d\r\n", g_dbgSkipAccountCB);
+   s += StringFormat("  skipped - daily disabled     : %d\r\n", g_dbgSkipDaily);
+   s += StringFormat("  skipped - position open      : %d\r\n", g_dbgSkipPosOpen);
+   s += StringFormat("  skipped - outside window     : %d\r\n", g_dbgSkipWindow);
+   s += StringFormat("Bars with window open          : %d\r\n", g_dbgWindowOpen);
+   s += StringFormat("  skipped - news blackout       : %d\r\n", g_dbgSkipNews);
+   s += StringFormat("Bars with news clear            : %d\r\n", g_dbgNewsClear);
+   s += StringFormat("  skipped - trend NONE          : %d\r\n", g_dbgTrendNone);
+   s += StringFormat("Bars trend = UP                 : %d\r\n", g_dbgTrendUp);
+   s += StringFormat("Bars trend = DOWN               : %d\r\n", g_dbgTrendDown);
+   s += StringFormat("Buy-side sweeps detected        : %d\r\n", g_dbgSweepUp);
+   s += StringFormat("Buy-side reversals confirmed    : %d\r\n", g_dbgReversalUp);
+   s += StringFormat("Sell-side sweeps detected       : %d\r\n", g_dbgSweepDown);
+   s += StringFormat("Sell-side reversals confirmed   : %d\r\n", g_dbgReversalDown);
+   s += StringFormat("Entry attempts (TryEnterTrade)  : %d\r\n", g_dbgEntryAttempts);
+   s += StringFormat("  rejected - spread too wide    : %d\r\n", g_dbgRejectSpread);
+   s += StringFormat("  rejected - below min stop lvl : %d\r\n", g_dbgRejectStops);
+   s += StringFormat("  rejected - lot rounds to 0    : %d\r\n", g_dbgRejectLot);
+   s += StringFormat("  rejected - order send failed  : %d\r\n", g_dbgRejectSend);
+   s += StringFormat("Orders successfully sent        : %d\r\n", g_dbgOrdersSent);
+   s += "First swing HIGH populated at (server time): " +
+        (g_dbgFirstSwingHighTime > 0 ? TimeToString(g_dbgFirstSwingHighTime, TIME_DATE|TIME_MINUTES) : "NEVER") + "\r\n";
+   s += "First swing LOW  populated at (server time): " +
+        (g_dbgFirstSwingLowTime  > 0 ? TimeToString(g_dbgFirstSwingLowTime,  TIME_DATE|TIME_MINUTES) : "NEVER") + "\r\n";
+   s += "Current swingHigh=" + DoubleToString(g_swingHigh, _Digits) +
+        "  swingLow=" + DoubleToString(g_swingLow, _Digits) + "\r\n";
+
+   if(g_dbgBarsEvaluated == 0)
+      s += "\r\n*** Read this row first: OnTick never even reached the entry-gating code -\r\n"
+           "    the EA saw zero new M1 bars during this run. Check the symbol/period\r\n"
+           "    the test was run on, and that ticks are actually being generated. ***\r\n";
+   else if(g_dbgWindowOpen == 0)
+      s += "\r\n*** Read this row first: the trading window NEVER opened during this run.\r\n"
+           "    Check BrokerToUTCOffsetHours against your broker's actual server-time\r\n"
+           "    offset from UTC - a wrong value here is the #1 cause of zero trades. ***\r\n";
+   else if(g_dbgTrendUp == 0 && g_dbgTrendDown == 0)
+      s += "\r\n*** Read this row first: trend was NEVER up or down (always NONE) - the\r\n"
+           "    EMA200 handle likely never had enough M15 history, or Bid/Ask was\r\n"
+           "    unavailable. Check TrendTimeframe/TrendEMAPeriod and your data range. ***\r\n";
+   else if(g_dbgSweepUp == 0 && g_dbgSweepDown == 0)
+      s += "\r\n*** Read this row first: trend was fine but no liquidity sweep was EVER\r\n"
+           "    detected. Check 'First swing HIGH/LOW populated at' above - if either\r\n"
+           "    says NEVER, swing-point detection itself is failing (verify SwingTimeframe\r\n"
+           "    history is available). If both populated, the setup may simply be rarer\r\n"
+           "    than SweepLookbackM1Bars allows - try increasing it. ***\r\n";
+   else if(g_dbgReversalUp == 0 && g_dbgReversalDown == 0)
+      s += "\r\n*** Read this row first: sweeps were detected but no M1 reversal candle\r\n"
+           "    ever confirmed - try lowering ReversalMinBodyPercent, or check the tick\r\n"
+           "    model used (\"Open prices only\" backtests can produce zero-range M1\r\n"
+           "    candles, which always fail this check - use \"Every tick\"). ***\r\n";
+   else if(g_dbgOrdersSent == 0)
+      s += "\r\n*** Read this row first: reversals were confirmed but every entry attempt\r\n"
+           "    was rejected - see the reject counters above (spread / stop level / lot\r\n"
+           "    size) and the per-rejection Print lines earlier in this log. ***\r\n";
+
+   s += "================================================================\r\n";
+   Print(s);
+
+   int fh = FileOpen("GoldLiquiditySweepEA_Diagnostics.txt", FILE_WRITE | FILE_TXT | FILE_ANSI);
+   if(fh != INVALID_HANDLE)
+   {
+      FileWriteString(fh, s);
+      FileClose(fh);
+   }
 }
 
 //====================================================================
@@ -187,29 +297,34 @@ void OnTick()
       return; // sweep/reversal detection & entries are evaluated once per closed M1 bar
 
    MaybeUpdateSwingPoints();
+   g_dbgBarsEvaluated++;
 
    // ---- Entry gating (all of these only block NEW entries; existing positions
    //      keep their broker-side SL/TP and are managed regardless) ----
    if(g_accountCircuitBreakerTriggered)
    {
+      g_dbgSkipAccountCB++;
       if(LogSkipReasons) Print("Skip: account circuit breaker is active.");
       return; // account-level breaker: no auto-resume, ever
    }
 
    if(g_dailyTradingDisabled)
    {
+      g_dbgSkipDaily++;
       if(LogSkipReasons) Print("Skip: daily trading disabled (profit target / loss cap / consecutive-loss breaker).");
       return; // daily profit target / loss cap / consecutive-loss breaker already hit today
    }
 
    if(OnePositionAtATime && PositionSelect(_Symbol))
    {
+      g_dbgSkipPosOpen++;
       if(LogSkipReasons) Print("Skip: a position is already open (OnePositionAtATime=true).");
       return;
    }
 
    if(!TradingWindowFilter())
    {
+      g_dbgSkipWindow++;
       if(LogSkipReasons)
       {
          MqlDateTime dbg; TimeToStruct(GetIstanbulTime(), dbg);
@@ -219,16 +334,20 @@ void OnTick()
       }
       return; // outside 11:00-19:00 Istanbul time
    }
+   g_dbgWindowOpen++;
 
    if(NewsFilter())
    {
+      g_dbgSkipNews++;
       if(LogSkipReasons) Print("Skip: inside a high-impact USD news blackout window.");
       return; // inside a high-impact USD news blackout window
    }
+   g_dbgNewsClear++;
 
    int trend = GetTrendFilter();
    if(trend == TREND_NONE)
    {
+      g_dbgTrendNone++;
       if(LogSkipReasons) Print("Skip: no trend (price == EMA200 or EMA/price unavailable).");
       return;
    }
@@ -238,22 +357,34 @@ void OnTick()
 
    if(trend == TREND_UP)
    {
+      g_dbgTrendUp++;
       // Uptrend -> only buy-side sweeps: liquidity taken BELOW a swing low, then reclaimed.
-      if(DetectLiquiditySweep(TREND_UP, sweptLevel, sweepExtreme, sweepBarTime) &&
-         DetectM1ReversalCandle(TREND_UP, sweptLevel))
+      if(DetectLiquiditySweep(TREND_UP, sweptLevel, sweepExtreme, sweepBarTime))
       {
-         TryEnterTrade(ORDER_TYPE_BUY, sweepExtreme);
+         g_dbgSweepUp++;
+         if(DetectM1ReversalCandle(TREND_UP, sweptLevel))
+         {
+            g_dbgReversalUp++;
+            g_dbgEntryAttempts++;
+            TryEnterTrade(ORDER_TYPE_BUY, sweepExtreme);
+         }
       }
       else if(LogSkipReasons)
          Print("Skip: uptrend, no confirmed buy-side sweep+reversal this bar. swingLow=", g_swingLow);
    }
    else if(trend == TREND_DOWN)
    {
+      g_dbgTrendDown++;
       // Downtrend -> only sell-side sweeps: liquidity taken ABOVE a swing high, then rejected.
-      if(DetectLiquiditySweep(TREND_DOWN, sweptLevel, sweepExtreme, sweepBarTime) &&
-         DetectM1ReversalCandle(TREND_DOWN, sweptLevel))
+      if(DetectLiquiditySweep(TREND_DOWN, sweptLevel, sweepExtreme, sweepBarTime))
       {
-         TryEnterTrade(ORDER_TYPE_SELL, sweepExtreme);
+         g_dbgSweepDown++;
+         if(DetectM1ReversalCandle(TREND_DOWN, sweptLevel))
+         {
+            g_dbgReversalDown++;
+            g_dbgEntryAttempts++;
+            TryEnterTrade(ORDER_TYPE_SELL, sweepExtreme);
+         }
       }
       else if(LogSkipReasons)
          Print("Skip: downtrend, no confirmed sell-side sweep+reversal this bar. swingHigh=", g_swingHigh);
@@ -360,9 +491,17 @@ void MaybeUpdateSwingPoints()
    double h, l;
    datetime th, tl;
    if(FindLastSwingHigh(h, th))
+   {
       g_swingHigh = h;
+      if(g_dbgFirstSwingHighTime == 0)
+         g_dbgFirstSwingHighTime = TimeCurrent();
+   }
    if(FindLastSwingLow(l, tl))
+   {
       g_swingLow = l;
+      if(g_dbgFirstSwingLowTime == 0)
+         g_dbgFirstSwingLowTime = TimeCurrent();
+   }
 }
 
 //====================================================================
@@ -375,10 +514,14 @@ void MaybeUpdateSwingPoints()
 //====================================================================
 bool DetectLiquiditySweep(int direction, double &sweptLevel, double &sweepExtreme, datetime &sweepBarTime)
 {
-   if(g_swingHigh <= 0.0 || g_swingLow <= 0.0)
-      return false;
-
+   // NOTE: only the level actually needed for this direction is checked -
+   // a prior version required BOTH g_swingHigh and g_swingLow to be valid
+   // before considering EITHER direction, which could needlessly block
+   // buy-side setups just because no recent swing high happened to exist
+   // yet (or vice versa). Each direction only depends on its own level.
    double level = (direction == TREND_UP) ? g_swingLow : g_swingHigh;
+   if(level <= 0.0)
+      return false;
 
    int need = SweepLookbackM1Bars + 1;
    double h[], l[];
@@ -803,6 +946,7 @@ bool TryEnterTrade(ENUM_ORDER_TYPE orderType, double sweepExtreme)
    double spreadPoints = (ask - bid) / point;
    if(spreadPoints > MaxSpreadPoints)
    {
+      g_dbgRejectSpread++;
       Print("TryEnterTrade: spread ", DoubleToString(spreadPoints, 1), " points exceeds MaxSpreadPoints (",
             MaxSpreadPoints, ") - skipping entry.");
       return false;
@@ -834,6 +978,7 @@ bool TryEnterTrade(ENUM_ORDER_TYPE orderType, double sweepExtreme)
    long stopsLevel = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOPS_LEVEL);
    if(stopsLevel > 0 && stopDistancePoints < stopsLevel)
    {
+      g_dbgRejectStops++;
       Print("TryEnterTrade: computed stop distance ", DoubleToString(stopDistancePoints, 1),
             " points is inside the broker's minimum stop level (", stopsLevel, ") - skipping entry.");
       return false;
@@ -841,7 +986,10 @@ bool TryEnterTrade(ENUM_ORDER_TYPE orderType, double sweepExtreme)
 
    double lot = CalculateDynamicLot(stopDistancePoints);
    if(lot <= 0.0)
+   {
+      g_dbgRejectLot++;
       return false; // CalculateDynamicLot() already logged the reason
+   }
 
    sl = NormalizeDouble(sl, digits);
    tp = NormalizeDouble(tp, digits);
@@ -853,13 +1001,19 @@ bool TryEnterTrade(ENUM_ORDER_TYPE orderType, double sweepExtreme)
       sent = trade.Sell(lot, _Symbol, entryPrice, sl, tp, TradeComment);
 
    if(!sent)
+   {
+      g_dbgRejectSend++;
       Print("TryEnterTrade: order send FAILED. retcode=", trade.ResultRetcode(),
             " desc=", trade.ResultRetcodeDescription());
+   }
    else
+   {
+      g_dbgOrdersSent++;
       Print("TryEnterTrade: ", EnumToString(orderType), " lot=", DoubleToString(lot, 2),
             " entry=", DoubleToString(entryPrice, digits),
             " sl=", DoubleToString(sl, digits), " tp=", DoubleToString(tp, digits),
             " stopDistPts=", DoubleToString(stopDistancePoints, 1));
+   }
 
    return sent;
 }
@@ -908,6 +1062,12 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
 //====================================================================
 double OnTester()
 {
+   // OnDeinit() also calls this, but the tester's call order between
+   // OnDeinit()/OnTester() isn't guaranteed across builds - calling it
+   // here too (harmless if it runs twice) guarantees the funnel prints
+   // and gets written to file alongside the performance report below.
+   PrintDiagnosticsSummary();
+
    double trades      = TesterStatistics(STAT_TRADES);
    double winTrades   = TesterStatistics(STAT_PROFIT_TRADES);
    double lossTrades  = TesterStatistics(STAT_LOSS_TRADES);

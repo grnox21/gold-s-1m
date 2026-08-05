@@ -37,10 +37,16 @@ test:
    twice a year, so re-check around March/October if that applies).
 
 If you still get zero (or suspiciously few) trades after setting this
-correctly, turn on the `LogSkipReasons` input and re-run — the Experts
-log will print exactly which gate (window, news, trend, no
-sweep/reversal, etc.) is blocking entry on every bar, in the tester's
-Journal tab.
+correctly, you don't need to turn anything on — the EA now **always**
+prints a diagnostic funnel at the end of every run (Journal tab, and
+also saved to `MQL5/Files/GoldLiquiditySweepEA_Diagnostics.txt`),
+showing exactly how many M1 bars made it past each stage: window open
+→ news clear → trend up/down → sweep detected → reversal confirmed →
+entry attempted → order sent. Whichever count hits zero first tells
+you precisely where it's dying, and the funnel prints a plain-language
+hint for the most common cause at that stage. For even more detail
+turn on the `LogSkipReasons` input too, which prints the skip reason
+for every single bar (verbose - only use for a short test range).
 
 ## 1. Get one full year of XAUUSD M1 data
 
