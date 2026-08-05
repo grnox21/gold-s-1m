@@ -1,5 +1,5 @@
 //+------------------------------------------------------------------+
-//|                                            gold fast 12.mq5       |
+//|                                            gold fast 13.mq5       |
 //|                                                                    |
 //| Fast M1 scalping Expert Advisor for XAUUSD (Gold) - MetaTrader 5. |
 //|                                                                    |
@@ -74,9 +74,9 @@ input double InpDailyMaxLossPct      = 10.0;     // Daily max loss, % of the day
 //====================================================================
 input group "=== 6. Entry Filters ==="
 input int    InpMaxSpreadPoints    = 50;         // Max allowed spread, points - blocks new entries above this
-input int    InpMaxOpenTrades      = 1;          // Max simultaneously open trades opened by this EA
+input int    InpMaxOpenTrades      = 10;         // Max simultaneously open trades opened by this EA (raised so signals aren't blocked while a previous trade is still open - needed to hit high daily trade counts)
 input int    InpRangeAvgBars       = 20;         // Bars used to compute the average range (sideways-market filter)
-input double InpMinBodyRatio       = 0.30;       // Min candle-body / average-range ratio required to accept a signal
+input double InpMinBodyRatio       = 0.05;       // Min candle-body / average-range ratio required to accept a signal (loosened so most directional candles qualify, for higher trade frequency)
 
 //====================================================================
 // 7. STATISTICS / LOGGING (for backtest evaluation)
@@ -85,6 +85,7 @@ input group "=== 7. Statistics / Logging ==="
 input bool   InpPrintStatsOnDeinit = true;       // Print performance summary to the Experts log when EA is removed
 input bool   InpWriteCsvLog        = true;       // Write a per-trade CSV log (win/loss, profit)
 input string InpCsvFileName        = "GoldScalpingM1_EA_trades.csv"; // CSV file name, saved under MQL5\Files
+input int    InpMinDailyTradesTarget = 50;       // Informational only: logs a warning if fewer trades than this fired that day (does NOT force trades - entries still come only from the strategy signal)
 
 input group "=== Debug ==="
 input bool   InpVerboseLogging     = false;      // Print the reason every time a potential entry is blocked
@@ -101,6 +102,7 @@ string   g_lastResetDateKey = "";  // "YYYY.MM.DD" of the last day the daily cou
 double   g_dailyStartEquity = 0;   // equity at the start of the current (server) calendar day
 bool     g_dailyProfitHit   = false;
 bool     g_dailyLossHit     = false;
+int      g_dailyTradeCount  = 0;   // trades OPENED so far today (informational vs. InpMinDailyTradesTarget)
 
 // --- drawdown tracking ----------------------------------------------
 double   g_peakEquity     = 0;
@@ -157,6 +159,7 @@ int OnInit()
    g_dailyStartEquity  = AccountInfoDouble(ACCOUNT_EQUITY);
    g_dailyProfitHit    = false;
    g_dailyLossHit      = false;
+   g_dailyTradeCount   = 0;
    g_peakEquity        = AccountInfoDouble(ACCOUNT_EQUITY);
    g_maxDrawdownPct    = 0;
 
@@ -366,7 +369,9 @@ void TryOpenNewTrade()
       double price = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
       double sl    = NormalizeDouble(price - InpStopLossUSD, _Digits);
       double tp    = NormalizeDouble(price + InpTakeProfitUSD, _Digits);
-      if(!trade.Buy(lot, _Symbol, price, sl, tp, "GoldScalpM1 buy"))
+      if(trade.Buy(lot, _Symbol, price, sl, tp, "GoldScalpM1 buy"))
+         g_dailyTradeCount++; // 7. counts toward InpMinDailyTradesTarget
+      else
          Print("Buy order failed. Error: ", GetLastError());
    }
    else // sellSignal
@@ -374,7 +379,9 @@ void TryOpenNewTrade()
       double price = SymbolInfoDouble(_Symbol, SYMBOL_BID);
       double sl    = NormalizeDouble(price + InpStopLossUSD, _Digits);
       double tp    = NormalizeDouble(price - InpTakeProfitUSD, _Digits);
-      if(!trade.Sell(lot, _Symbol, price, sl, tp, "GoldScalpM1 sell"))
+      if(trade.Sell(lot, _Symbol, price, sl, tp, "GoldScalpM1 sell"))
+         g_dailyTradeCount++; // 7. counts toward InpMinDailyTradesTarget
+      else
          Print("Sell order failed. Error: ", GetLastError());
    }
 }
@@ -594,10 +601,24 @@ void UpdateDailyReset()
 
    if(todayKey != g_lastResetDateKey)
    {
+      // Report the PREVIOUS day's trade count against the informational
+      // target before resetting it, so you can see whether it was hit.
+      if(g_lastResetDateKey != "")
+      {
+         if(g_dailyTradeCount < InpMinDailyTradesTarget)
+            Print("Day ", g_lastResetDateKey, " finished with ", g_dailyTradeCount,
+                  " trades - BELOW the ", InpMinDailyTradesTarget, "/day target ",
+                  "(market didn't produce enough qualifying signals; entries are never forced).");
+         else
+            Print("Day ", g_lastResetDateKey, " finished with ", g_dailyTradeCount,
+                  " trades - target of ", InpMinDailyTradesTarget, "/day met.");
+      }
+
       g_lastResetDateKey = todayKey;
       g_dailyStartEquity = AccountInfoDouble(ACCOUNT_EQUITY);
       g_dailyProfitHit   = false;
       g_dailyLossHit     = false;
+      g_dailyTradeCount  = 0;
       Print("New trading day started (", todayKey, "). Day-start equity = ",
             DoubleToString(g_dailyStartEquity, 2));
    }

@@ -29,8 +29,13 @@ MetaTrader 5 Expert Advisor for fast M1 scalping on XAUUSD (Gold).
 - **Daily circuit breaker:** closes everything and stops trading for the rest
   of the day once equity is +20% or −10% versus the day's starting equity
   (reset at the start of each new server calendar day).
-- **Entry blocking:** max spread, max concurrent trades, and a sideways-market
-  filter (candle body vs. recent average range) are all adjustable inputs.
+- **Entry blocking:** max spread, max concurrent trades (default raised to
+  10, up from 1), and a sideways-market filter (default loosened to 0.05)
+  are all adjustable inputs, tuned to maximize signal frequency.
+- **Daily trade-count target:** `InpMinDailyTradesTarget` (default 50) is
+  **informational only** — the EA logs whether that day's actual trade count
+  met it. It never forces trades outside the real M1 candle/EMA9 signal, so
+  the count still depends on market conditions that day.
 - **Statistics:** win rate, average win/loss, longest losing streak, and max
   drawdown are printed to the Experts log on removal, plus a per-trade CSV
   log written to `MQL5/Files/`. `OnTester()` also returns profit/drawdown as
