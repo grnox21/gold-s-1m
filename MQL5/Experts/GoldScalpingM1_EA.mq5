@@ -73,7 +73,7 @@ input double InpDailyMaxLossPct      = 10.0;     // Daily max loss, % of the day
 // 6. ENTRY BLOCKING CONDITIONS
 //====================================================================
 input group "=== 6. Entry Filters ==="
-input double InpMaxSpreadUSD       = 0.50;       // Max allowed spread, $ price gap (Ask-Bid) - blocks new entries above this. Was broker "points" before, which on a 3-digit XAUUSD account could silently mean 200-300+ points and block almost every bar - this is now broker-independent like TP/SL.
+input double InpMaxSpreadUSD       = 0.80;       // Max allowed spread, $ price gap (Ask-Bid) - blocks new entries above this. Was broker "points" before, which on a 3-digit XAUUSD account could silently mean 200-300+ points and block almost every bar - this is now broker-independent like TP/SL. 0.80 gives headroom above Exness Standard's typical ~$0.20-0.40 XAUUSD spread without letting through extreme news-time spikes.
 input int    InpMaxOpenTrades      = 10;         // Max simultaneously open trades opened by this EA (raised so signals aren't blocked while a previous trade is still open - needed to hit high daily trade counts)
 input int    InpRangeAvgBars       = 20;         // Bars used to compute the average range (sideways-market filter)
 input double InpMinBodyRatio       = 0.05;       // Min candle-body / average-range ratio required to accept a signal (loosened so most directional candles qualify, for higher trade frequency)
