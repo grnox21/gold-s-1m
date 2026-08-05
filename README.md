@@ -17,8 +17,13 @@ MetaTrader 5 Expert Advisor for fast M1 scalping on XAUUSD (Gold).
 ## Strategy summary
 
 - **Timeframe:** M1 only — entries are evaluated once per confirmed bar close.
-- **Entry:** buy when the closed M1 candle is bullish and closes above EMA(9);
-  sell when it's bearish and closes below EMA(9). No other filters/timeframes.
+- **Entry (win-rate tuned):** buy when the closed M1 candle is bullish and
+  closes above the fast EMA(9); sell when bearish and closes below it — plus
+  three optional, toggleable quality filters (all `input`, all on by default):
+  the close must clear the EMA by a minimum $ margin (momentum), the prior
+  candle must agree in direction (2-candle confirmation), and price must be
+  on the same side of a slower trend EMA(50). Disable any of them to fall
+  back toward the original pure candle+EMA9 signal.
 - **Exits:** TP/SL/breakeven/trailing are defined as a straight **$ price
   move** (e.g. 1.30 = price moves $1.30), not broker points — this keeps
   the targets identical across brokers regardless of quote digits/point size.
@@ -33,9 +38,18 @@ MetaTrader 5 Expert Advisor for fast M1 scalping on XAUUSD (Gold).
   default tuned for Exness Standard's typical ~$0.20-0.40 XAUUSD spread
   with headroom - fixed from broker "points", which on some brokers'
   XAUUSD digit convention silently meant hundreds of points and blocked
-  nearly every bar), max concurrent trades (raised to 10, up from 1), and
-  a sideways-market filter (loosened to 0.05) — all adjustable inputs,
-  tuned to maximize signal frequency.
+  nearly every bar), max concurrent trades (raised to 10, up from 1), a
+  sideways-market filter (loosened to 0.05), and a post-loss cooldown
+  (default 3 minutes) that pauses new entries right after a losing trade
+  to avoid whipsaw re-entries — all adjustable inputs.
+
+> **On "guaranteed 20% daily profit":** no strategy can promise a fixed
+> daily return - that's not a code limitation, it's math (compounded, it
+> would turn $1,000 into more than a billion dollars within a year). The
+> `InpDailyProfitTargetPct = 20` input is a **safety circuit breaker**: if
+> equity happens to be up 20% that day, it locks in gains and stops trading
+> - it is not a promise the target will be hit. This update instead focuses
+> on **win-rate quality** (see the entry filters above) per your request.
 - **Daily trade-count target:** `InpMinDailyTradesTarget` (default 50) is
   **informational only** — the EA logs whether that day's actual trade count
   met it. It never forces trades outside the real M1 candle/EMA9 signal, so

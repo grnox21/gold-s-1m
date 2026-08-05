@@ -1,25 +1,32 @@
 //+------------------------------------------------------------------+
-//|                                            gold fast 14.mq5       |
+//|                                              gooold 1.mq5       |
 //|                                                                    |
 //| Fast M1 scalping Expert Advisor for XAUUSD (Gold) - MetaTrader 5. |
 //|                                                                    |
 //| Strategy summary (see numbered sections below for full spec):     |
 //|   1. General settings / symbol / risk switches                    |
 //|   2. Cumulative "doubling" lot-size table                         |
-//|   3. Entry logic: M1 candle direction + EMA(9) position, on the   |
-//|      close of a confirmed bar only (no repainting)                |
+//|   3. Entry logic (win-rate tuned): M1 candle direction + fast EMA |
+//|      position, on the close of a confirmed bar only (no           |
+//|      repainting), filtered by: minimum $ separation past the EMA |
+//|      (momentum), prior-candle agreement (2-candle confirmation),  |
+//|      and a slower trend EMA (only trade with the trend)           |
 //|   4. Trade management: TP/SL/breakeven/trailing defined as a $    |
 //|      price move (not broker points), then trailing stop           |
 //|   5. Daily profit-target / max-loss circuit breaker               |
 //|   6. Entry-blocking conditions (spread, sideways market, max      |
-//|      concurrent trades, daily stops already hit)                  |
+//|      concurrent trades, daily stops already hit, post-loss        |
+//|      cooldown)                                                    |
 //|   7. Built-in statistics (win rate, avg win/loss, losing streak,  |
-//|      drawdown) logged to the Experts tab and to a CSV file so the |
-//|      EA can be evaluated after a Strategy Tester run.             |
+//|      drawdown) plus a signal-funnel breakdown, logged to the      |
+//|      Experts tab and to a CSV file for Strategy Tester evaluation.|
 //|                                                                    |
 //| No trading-hours restriction and no news-event filter: the EA can |
 //| open trades at any time, on any M1 candle that satisfies the      |
-//| entry signal.                                                     |
+//| entry signal. The extra filters in section 3 trade fewer, higher- |
+//| quality signals for a better win rate - all individually toggle-  |
+//| able/tunable via inputs, so the original pure candle+EMA9 logic   |
+//| can be restored by disabling them.                                |
 //|                                                                    |
 //| All numeric parameters are exposed as inputs - no magic numbers   |
 //| are hardcoded in the trading logic itself.                        |
@@ -46,10 +53,14 @@ input string InpLotTableBalances   = "50,100,200,400,800,1600,3200,6400,12800,25
 input string InpLotTableLots       = "0.01,0.02,0.04,0.08,0.16,0.32,0.64,1.28,2.56,5.12"; // Lot for each threshold above (same order/count)
 
 //====================================================================
-// 3. ENTRY LOGIC (M1 candle direction + EMA9) - no other filters/timeframes
+// 3. ENTRY LOGIC (M1 candle direction + EMA9, plus win-rate filters)
 //====================================================================
 input group "=== 3. Entry Logic (M1, EMA) ==="
-input int    InpEmaPeriod          = 9;          // EMA period, applied to M1 close price
+input int    InpEmaPeriod          = 9;          // Fast EMA period, applied to M1 close price (core signal)
+input bool   InpUseTrendFilter     = true;       // Only BUY above the trend EMA / SELL below it (cuts counter-trend losers)
+input int    InpTrendEmaPeriod     = 50;         // Slower EMA period used as the trend filter
+input double InpMinEmaSeparationUSD = 0.10;      // Min $ distance close must clear past EMA9 (0 = off) - rejects weak near-touch signals
+input bool   InpRequireTwoCandleAgreement = true; // Require the PRIOR candle to also agree in direction (cuts single-candle noise)
 
 //====================================================================
 // 4. TRADE MANAGEMENT
@@ -77,6 +88,7 @@ input double InpMaxSpreadUSD       = 0.80;       // Max allowed spread, $ price 
 input int    InpMaxOpenTrades      = 10;         // Max simultaneously open trades opened by this EA (raised so signals aren't blocked while a previous trade is still open - needed to hit high daily trade counts)
 input int    InpRangeAvgBars       = 20;         // Bars used to compute the average range (sideways-market filter)
 input double InpMinBodyRatio       = 0.05;       // Min candle-body / average-range ratio required to accept a signal (loosened so most directional candles qualify, for higher trade frequency)
+input int    InpCooldownAfterLossMin = 3;        // Minutes to pause new entries after a losing trade closes (0 = disabled) - avoids revenge/whipsaw re-entries
 
 //====================================================================
 // 7. STATISTICS / LOGGING (for backtest evaluation)
@@ -94,8 +106,10 @@ input bool   InpVerboseLogging     = false;      // Print the reason every time 
 // GLOBAL STATE
 //====================================================================
 CTrade   trade;                    // trading wrapper
-int      g_emaHandle = INVALID_HANDLE;
+int      g_emaHandle = INVALID_HANDLE;      // fast EMA (InpEmaPeriod) - the core signal
+int      g_trendEmaHandle = INVALID_HANDLE; // slower EMA (InpTrendEmaPeriod) - trend filter
 datetime g_lastBarTime = 0;        // time of the last M1 bar we already evaluated (new-bar detector)
+datetime g_lastLossCloseTime = 0;  // close time of the most recent losing trade, for the cooldown filter
 
 // --- daily circuit breaker state -----------------------------------
 string   g_lastResetDateKey = "";  // "YYYY.MM.DD" of the last day the daily counters were reset
@@ -132,6 +146,10 @@ int      g_blockedSideways     = 0; // skipped: sideways-market filter
 int      g_noSignal            = 0; // reached the signal check, but candle/EMA9 didn't align
 int      g_entriesAttempted    = 0; // signal fired, order was sent
 int      g_entriesOpened       = 0; // signal fired, order accepted by the broker
+int      g_blockedCooldown     = 0; // skipped: still inside the post-loss cooldown window
+int      g_blockedMomentum     = 0; // candle had direction, but didn't clear the EMA9 separation threshold
+int      g_blockedTwoCandle    = 0; // candle+EMA9 agreed, but the prior candle didn't confirm direction
+int      g_blockedTrend        = 0; // candle+EMA9(+prior candle) agreed, but against the slower trend EMA
 
 //+------------------------------------------------------------------+
 //| Expert initialization function                                    |
@@ -141,11 +159,19 @@ int OnInit()
    trade.SetExpertMagicNumber(InpMagicNumber);
    trade.SetDeviationInPoints((ulong)InpSlippagePoints);
 
-   // EMA(9) on M1 close - the only indicator this strategy uses
+   // Fast EMA on M1 close - the core signal
    g_emaHandle = iMA(_Symbol, PERIOD_M1, InpEmaPeriod, 0, MODE_EMA, PRICE_CLOSE);
    if(g_emaHandle == INVALID_HANDLE)
    {
       Print("Failed to create EMA(", InpEmaPeriod, ") indicator handle. Error: ", GetLastError());
+      return(INIT_FAILED);
+   }
+
+   // Slower EMA on M1 close - trend filter (only used if InpUseTrendFilter)
+   g_trendEmaHandle = iMA(_Symbol, PERIOD_M1, InpTrendEmaPeriod, 0, MODE_EMA, PRICE_CLOSE);
+   if(g_trendEmaHandle == INVALID_HANDLE)
+   {
+      Print("Failed to create trend EMA(", InpTrendEmaPeriod, ") indicator handle. Error: ", GetLastError());
       return(INIT_FAILED);
    }
 
@@ -166,6 +192,7 @@ int OnInit()
 
    // --- reset all state ---
    g_lastBarTime       = 0;
+   g_lastLossCloseTime = 0;
    g_lastResetDateKey  = "";
    g_dailyStartEquity  = AccountInfoDouble(ACCOUNT_EQUITY);
    g_dailyProfitHit    = false;
@@ -182,6 +209,8 @@ int OnInit()
    g_blockedSpread = 0; g_blockedMaxTrades = 0; g_blockedHistory = 0;
    g_blockedSideways = 0; g_noSignal = 0;
    g_entriesAttempted = 0; g_entriesOpened = 0;
+   g_blockedCooldown = 0; g_blockedMomentum = 0;
+   g_blockedTwoCandle = 0; g_blockedTrend = 0;
 
    // Start each run (e.g. each Strategy Tester pass) with a fresh CSV log.
    if(InpWriteCsvLog && FileIsExist(InpCsvFileName))
@@ -204,6 +233,8 @@ void OnDeinit(const int reason)
 {
    if(g_emaHandle != INVALID_HANDLE)
       IndicatorRelease(g_emaHandle);
+   if(g_trendEmaHandle != INVALID_HANDLE)
+      IndicatorRelease(g_trendEmaHandle);
 
    if(InpPrintStatsOnDeinit)
       PrintStatistics();
@@ -283,6 +314,7 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
       g_curLossStreak++;
       if(g_curLossStreak > g_maxLossStreak)
          g_maxLossStreak = g_curLossStreak;
+      g_lastLossCloseTime = TimeCurrent(); // 6. starts the post-loss cooldown window
    }
 
    if(InpWriteCsvLog)
@@ -351,8 +383,18 @@ void TryOpenNewTrade()
       return;
    }
 
-   // Need enough history for the sideways-market average-range filter and the EMA.
-   if(Bars(_Symbol, PERIOD_M1) < InpRangeAvgBars + 3)
+   // 6. Post-loss cooldown - skip fresh entries for a bit after a losing
+   // trade closes, to avoid immediately re-entering into a whipsaw.
+   if(InpCooldownAfterLossMin > 0 && g_lastLossCloseTime > 0 &&
+      (TimeCurrent() - g_lastLossCloseTime) < InpCooldownAfterLossMin * 60)
+   {
+      g_blockedCooldown++;
+      if(InpVerboseLogging) Print("Blocked: still inside post-loss cooldown");
+      return;
+   }
+
+   // Need enough history for the sideways-market average-range filter and the EMAs.
+   if(Bars(_Symbol, PERIOD_M1) < InpRangeAvgBars + InpTrendEmaPeriod + 3)
    {
       g_blockedHistory++;
       return;
@@ -362,7 +404,7 @@ void TryOpenNewTrade()
    double open1  = iOpen(_Symbol, PERIOD_M1, 1);
    double close1 = iClose(_Symbol, PERIOD_M1, 1);
 
-   // EMA(9) value aligned to that same closed candle.
+   // Fast EMA value aligned to that same closed candle.
    double emaBuf[];
    ArraySetAsSeries(emaBuf, true);
    if(CopyBuffer(g_emaHandle, 0, 1, 1, emaBuf) != 1)
@@ -380,7 +422,7 @@ void TryOpenNewTrade()
       return;
    }
 
-   // 3. Core entry signal - pure M1 candle direction + EMA9 position, nothing else.
+   // 3. Core entry signal - M1 candle direction + fast EMA position.
    bool bullishCandle = (close1 > open1);
    bool bearishCandle = (close1 < open1);
 
@@ -391,6 +433,55 @@ void TryOpenNewTrade()
    {
       g_noSignal++; // candle direction and EMA9 position didn't agree on this bar
       return;
+   }
+
+   // 3. Momentum confirmation - close must clear the fast EMA by a minimum
+   // $ margin, not just brush past it, to filter out weak near-touch signals.
+   if(InpMinEmaSeparationUSD > 0)
+   {
+      double sep = MathAbs(close1 - ema1);
+      if(sep < InpMinEmaSeparationUSD)
+      {
+         g_blockedMomentum++;
+         if(InpVerboseLogging) Print("Blocked: EMA separation $", DoubleToString(sep, 2), " < min $", DoubleToString(InpMinEmaSeparationUSD, 2));
+         return;
+      }
+   }
+
+   // 3. Two-candle agreement - the PRIOR candle (shift 2) must point the
+   // same direction, so a single noisy candle can't trigger a trade alone.
+   if(InpRequireTwoCandleAgreement)
+   {
+      double open2  = iOpen(_Symbol, PERIOD_M1, 2);
+      double close2 = iClose(_Symbol, PERIOD_M1, 2);
+      bool prevBullish = (close2 > open2);
+      bool prevBearish = (close2 < open2);
+      if((buySignal && !prevBullish) || (sellSignal && !prevBearish))
+      {
+         g_blockedTwoCandle++;
+         if(InpVerboseLogging) Print("Blocked: prior candle didn't confirm direction");
+         return;
+      }
+   }
+
+   // 3. Trend filter - only trade WITH the slower EMA's direction, to cut
+   // down on counter-trend losers.
+   if(InpUseTrendFilter)
+   {
+      double trendBuf[];
+      ArraySetAsSeries(trendBuf, true);
+      if(CopyBuffer(g_trendEmaHandle, 0, 1, 1, trendBuf) != 1)
+      {
+         g_blockedHistory++;
+         return;
+      }
+      double trendEma1 = trendBuf[0];
+      if((buySignal && close1 <= trendEma1) || (sellSignal && close1 >= trendEma1))
+      {
+         g_blockedTrend++;
+         if(InpVerboseLogging) Print("Blocked: against the trend EMA(", InpTrendEmaPeriod, ")");
+         return;
+      }
    }
 
    double lot = GetLotSize();
@@ -808,9 +899,13 @@ void PrintStatistics()
    Print("  - skipped, daily stop hit  : ", g_barsSkippedDailyHit);
    Print("  - blocked by spread        : ", g_blockedSpread);
    Print("  - blocked by max trades    : ", g_blockedMaxTrades);
+   Print("  - blocked, post-loss cooldn: ", g_blockedCooldown);
    Print("  - blocked, not enough hist.: ", g_blockedHistory);
    Print("  - blocked, sideways market : ", g_blockedSideways);
    Print("  - no signal (candle/EMA9)  : ", g_noSignal);
+   Print("  - blocked, EMA9 separation : ", g_blockedMomentum);
+   Print("  - blocked, 2-candle agree  : ", g_blockedTwoCandle);
+   Print("  - blocked, against trend   : ", g_blockedTrend);
    Print("  - entries attempted        : ", g_entriesAttempted);
    Print("  - entries actually opened  : ", g_entriesOpened);
    Print("=============================================================");
