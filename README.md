@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Yusuf Demir Erkek Kuaförü
 
-## Getting Started
+Premium erkek kuaförü web sitesi ve randevu sistemi: Next.js 16 (App Router) + Supabase/PostgreSQL, gerçek çift-katmanlı çifte-rezervasyon koruması, çok-berberli müsaitlik motoru, admin paneli ve WhatsApp bildirim altyapısı.
 
-First, run the development server:
+## Teknoloji
+
+Next.js 16 · TypeScript · Tailwind CSS v4 · Supabase (Postgres, Auth, RLS) · GSAP + Lenis · React Hook Form + Zod
+
+## Hızlı Başlangıç
 
 ```bash
+npm install
+cp .env.example .env.local   # aşağıdaki "Supabase Kurulumu" bölümüne bakın
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`npm run build` her zaman gerçek `.env` değerleri olmadan da başarılı olur — veriye dokunan her sayfa `force-dynamic`'tir, yani derleme sırasında değil, istek anında veri çeker.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Supabase Kurulumu
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. [supabase.com](https://supabase.com) üzerinde bir proje oluşturun (veya self-host edin).
+2. **SQL Editor** → `supabase/migrations/` altındaki dosyaları **sırayla** (0001 → 0008) çalıştırın.
+3. `supabase/seed.sql` dosyasını çalıştırın — 3 yer tutucu berber, 8 hizmet ve çalışma saatleri ekler; hepsi `/admin` üzerinden düzenlenebilir.
+4. Project Settings → API'den `URL`, `anon key` ve `service_role key` değerlerini alıp `.env.local`'e yazın.
+5. İlk admin hesabınızı oluşturun: Authentication → Users'dan bir kullanıcı ekleyin, sonra SQL Editor'de:
+   ```sql
+   insert into admin_users (auth_user_id, full_name, role)
+   values ('<auth kullanıcısının UUID''si>', 'Adınız', 'owner');
+   ```
+6. (Opsiyonel ama önerilir) `pg_cron` uzantısını açın — `/api/cron/reminders` zaten Vercel Cron ile çalışır (bkz. `vercel.json`), pg_cron sadece Vercel dışı bir barındırma için alternatiftir.
 
-## Learn More
+Migration'lar hakkında detay için `supabase/README.md`'ye bakın — orada gerçek bir PostgreSQL 16 üzerinde doğrulanan şema ve **çifte rezervasyon koruması testinin** dökümü de var.
 
-To learn more about Next.js, take a look at the following resources:
+## Gerçek Marka Varlıkları
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Sohbette paylaşılan logo ve mekân fotoğrafı bu ortamda diske kaydedilemedi (mesaj içi görselleri dosyaya çıkaran bir araç yok) — site şimdilik tipografik bir "Yusuf Demir" wordmark'ı ve tasarlanmış bir hero/galeri boş durumuyla geliyor. Gerçek dosyaları eklemek için:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `public/brand/logo.png` — saydam, siyah daire kaldırılmış logo
+- `public/gallery/*.jpg` — mekân fotoğrafları (herhangi bir dosya adı)
 
-## Deploy on Vercel
+İkisi de eklendiği anda hero, galeri, footer ve favicon **otomatik olarak** gerçek görselleri kullanır — kod değişikliği gerekmez. Detay için `public/brand/README.md` ve `public/gallery/README.md`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## WhatsApp
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Gerçek API kimlik bilgileri olmadan sistem otomatik olarak **click-to-chat** (wa.me linki) moduna düşer — randevu akışı hiçbir zaman bu yüzden bozulmaz. Meta Cloud API veya Twilio'ya geçmek için `.env.example`'daki `WHATSAPP_*` değişkenlerini doldurup admin panelinden (WhatsApp Ayarları) sağlayıcıyı seçmeniz yeterli.
+
+## Test
+
+```bash
+npm run test:booking   # müsaitlik motorunun 17 senaryosu (gerçek motor kodu, sahte Supabase client'ı ile)
+npm run lint
+npm run build
+```
+
+Çifte rezervasyon koruması ayrıca gerçek bir PostgreSQL 16 üzerinde de doğrulandı — bkz. `supabase/README.md`.
+
+## Proje Yapısı
+
+```
+src/app/(site)/       Genel site sayfaları
+src/app/admin/         Admin paneli (login dışında requireAdmin() ile korumalı)
+src/app/api/           Randevu, müsaitlik ve cron uç noktaları
+src/lib/booking/       Müsaitlik motoru, randevu motoru, telefon/tarih yardımcıları
+src/lib/whatsapp/       Sağlayıcıdan bağımsız WhatsApp bildirim katmanı
+src/components/        UI kiti, site bileşenleri, randevu sihirbazı, admin bileşenleri
+supabase/migrations/    SQL şema (sırayla uygulanır)
+```
