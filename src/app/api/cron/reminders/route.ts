@@ -8,18 +8,14 @@ import type { Appointment } from "@/types/database";
 export const dynamic = "force-dynamic";
 
 /**
- * Needs something to call it roughly once a minute. It does NOT ship wired
- * to Vercel Cron on purpose: Vercel's Hobby (free) plan only allows
- * once-a-day cron schedules, and a per-minute `vercel.json` entry makes
- * every deployment fail outright on that plan — found this the hard way
- * mid-deploy. Pick one instead:
- *   - Free external pinger (easiest, no plan required): a service like
- *     cron-job.org, hitting this URL every minute with header
- *     `Authorization: Bearer <CRON_SECRET>`.
- *   - Supabase pg_cron + pg_net calling this same URL on a schedule.
- *   - Vercel Cron via vercel.json — but only once you're on a paid plan
- *     that supports per-minute schedules.
- * Whichever you pick, set CRON_SECRET in your env and send it as
+ * Driven by Vercel Cron, once a minute (see `vercel.json`). That schedule
+ * needs a paid Vercel plan — Hobby (free) only allows once-a-day cron
+ * schedules and rejects a per-minute entry at deploy time, failing the
+ * *entire* deployment, not just the cron. If you ever drop back to Hobby,
+ * empty out the `crons` array in `vercel.json` and drive this endpoint
+ * from something else instead: a free external pinger (e.g. cron-job.org)
+ * hitting this URL every minute, or Supabase pg_cron + pg_net.
+ * Whichever calls it, set CRON_SECRET in your env and send it as
  * `Authorization: Bearer $CRON_SECRET` — that's what's checked below.
  *
  * Two responsibilities, both idempotent (see notifyAppointment's
