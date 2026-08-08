@@ -1,0 +1,151 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme inline {
+  /* Brand neutrals — warm, not pure black/white */
+  --color-ink: #0e0d0b;
+  --color-ink-2: #131210;
+  --color-charcoal: #1a1815;
+  --color-charcoal-2: #242119;
+  --color-charcoal-3: #322d22;
+  --color-marble: #ede8de;
+  --color-marble-2: #e2dbcc;
+  --color-warm-white: #f7f4ec;
+  --color-ash: #8c8577;
+  --color-ash-2: #5f594c;
+
+  /* Brand accent — champagne gold, distilled from the logo */
+  --color-gold: #c9a24b;
+  --color-gold-bright: #e4c57c;
+  --color-gold-deep: #8a6c2e;
+  --color-gold-soft: #a9873f;
+
+  --color-hairline: rgba(201, 162, 75, 0.16);
+  --color-hairline-strong: rgba(201, 162, 75, 0.32);
+
+  /* Semantic — kept distinct from the brand accent */
+  --color-success: #4e8b5c;
+  --color-success-soft: #223224;
+  --color-warning: #b98a3d;
+  --color-warning-soft: #362a17;
+  --color-danger: #b4483f;
+  --color-danger-soft: #331e1c;
+  --color-info: #5b7fa6;
+  --color-info-soft: #1c2733;
+
+  /* Semantic aliases → power bg-background / text-foreground / border-border utilities */
+  --color-background: var(--color-ink);
+  --color-foreground: var(--color-warm-white);
+  --color-surface: var(--color-charcoal);
+  --color-surface-raised: var(--color-charcoal-2);
+  --color-muted: var(--color-ash);
+  --color-border: var(--color-hairline);
+  --color-border-strong: var(--color-hairline-strong);
+  --color-accent: var(--color-gold);
+  --color-accent-foreground: var(--color-ink);
+  --color-ring: var(--color-gold-soft);
+
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-manrope);
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+
+  --shadow-lift: 0 1px 0 rgba(201, 162, 75, 0.08), 0 20px 40px -24px rgba(0, 0, 0, 0.7);
+
+  --animate-fade-up: fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-marquee: marquee 32s linear infinite;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  color-scheme: dark;
+}
+
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  text-wrap: balance;
+  letter-spacing: -0.01em;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.label-caps {
+  font-family: var(--font-sans);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+.section-marble {
+  background: var(--color-marble);
+  color: var(--color-ink);
+}
+
+.section-marble .label-caps {
+  color: var(--color-gold-deep);
+}
+
+::selection {
+  background: var(--color-gold);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,74 @@
+import type { Metadata, Viewport } from "next";
+import { Fraunces, Manrope } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
+import { SmoothScrollProvider } from "@/components/providers/smooth-scroll-provider";
+import "./globals.css";
+
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  axes: ["opsz", "SOFT", "WONK"],
+  weight: "variable",
+  style: ["normal", "italic"],
+});
+
+const manrope = Manrope({
+  variable: "--font-manrope",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+});
+
+export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://yusufdemir.com.tr"
+  ),
+  title: {
+    default: "Yusuf Demir Erkek Kuaförü | Premium Erkek Kuaförü",
+    template: "%s | Yusuf Demir Erkek Kuaförü",
+  },
+  description:
+    "Yusuf Demir Erkek Kuaförü — saç kesimi, sakal tıraşı ve VIP bakım hizmetlerinde premium deneyim. Online randevu sistemiyle berberinizi ve saatinizi seçin.",
+  keywords: [
+    "erkek kuaförü",
+    "berber",
+    "saç kesimi",
+    "sakal tıraşı",
+    "randevu",
+    "Yusuf Demir",
+  ],
+  openGraph: {
+    type: "website",
+    locale: "tr_TR",
+    siteName: "Yusuf Demir Erkek Kuaförü",
+    title: "Yusuf Demir Erkek Kuaförü | Premium Erkek Kuaförü",
+    description:
+      "Saç kesimi, sakal tıraşı ve VIP bakım hizmetlerinde premium deneyim. Online randevunuzu şimdi oluşturun.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Yusuf Demir Erkek Kuaförü",
+    description: "Premium erkek kuaförü — online randevu sistemi.",
+  },
+  icons: {
+    icon: "/icon.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0e0d0b",
+};
+
+export default function RootLayout({ children }: LayoutProps<"/">) {
+  return (
+    <html
+      lang="tr"
+      className={`${fraunces.variable} ${manrope.variable} h-full`}
+      suppressHydrationWarning
+    >
+      <body className="min-h-full flex flex-col bg-background text-foreground antialiased">
+        <SmoothScrollProvider>{children}</SmoothScrollProvider>
+        <Toaster />
+      </body>
+    </html>
+  );
+}
