@@ -49,9 +49,9 @@ export const metadata: Metadata = {
     title: "Yusuf Demir Erkek Kuaförü",
     description: "Premium erkek kuaförü — online randevu sistemi.",
   },
-  icons: {
-    icon: "/icon.png",
-  },
+  // No `icons` entry here on purpose — app/icon.tsx and app/apple-icon.tsx
+  // are auto-detected by Next and injected automatically; pointing this at
+  // a static /icon.png that doesn't exist would silently 404.
 };
 
 export const viewport: Viewport = {

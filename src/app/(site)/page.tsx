@@ -14,11 +14,16 @@ import { listGalleryImages } from "@/lib/brand-assets";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Yusuf Demir Erkek Kuaförü | Premium Erkek Kuaförü",
-  description:
-    "Yusuf Demir Erkek Kuaförü — saç kesimi, sakal tıraşı ve VIP bakım hizmetlerinde premium deneyim. Online randevu sistemiyle berberinizi ve saatinizi seçin.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  // Pulls from Site Ayarları so an admin's edits actually show up in
+  // search results / link previews, with the same copy as a fallback.
+  const settings = await getSiteSettings();
+  return {
+    title: settings.meta_title,
+    description: settings.meta_description,
+    openGraph: { title: settings.meta_title, description: settings.meta_description },
+  };
+}
 
 export default async function HomePage() {
   const [barbers, services, settings] = await Promise.all([
