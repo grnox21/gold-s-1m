@@ -1,0 +1,75 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import gsap from "gsap";
+
+import { Button } from "@/components/ui/button";
+
+export function Hero({ heroImage }: { heroImage: string | null }) {
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion || !rootRef.current) return;
+
+    const targets = rootRef.current.querySelectorAll("[data-hero-reveal]");
+    gsap.set(targets, { opacity: 0, y: 24 });
+    gsap.to(targets, {
+      opacity: 1,
+      y: 0,
+      duration: 1.1,
+      ease: "power3.out",
+      stagger: 0.12,
+      delay: 0.15,
+    });
+  }, []);
+
+  return (
+    <section ref={rootRef} className="relative flex min-h-[92vh] items-end overflow-hidden bg-ink">
+      {/* Background: the real interior photo once available, otherwise a
+          textured stand-in evoking the same materials (marble, warm gold
+          rim-light on dark walls) described in the shop reference photo. */}
+      <div className="absolute inset-0">
+        {heroImage ? (
+          <Image src={heroImage} alt="Yusuf Demir Erkek Kuaförü iç mekan" fill priority className="object-cover" />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(60% 50% at 78% 30%, rgba(201,162,75,0.16), transparent 60%), radial-gradient(45% 40% at 15% 85%, rgba(201,162,75,0.08), transparent 65%), linear-gradient(160deg, #131210 0%, #0e0d0b 55%, #0a0908 100%)",
+            }}
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/70 to-ink/20" />
+        <div className="absolute inset-0 bg-ink/25" />
+      </div>
+
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-20 pt-40 sm:pb-28 lg:px-12 lg:pb-32">
+        <p data-hero-reveal className="label-caps mb-6 text-[0.72rem] text-gold">
+          Yusuf Demir · Erkek Kuaförü
+        </p>
+        <h1
+          data-hero-reveal
+          className="max-w-3xl font-display text-[2.75rem] leading-[1.05] text-warm-white sm:text-6xl lg:text-7xl"
+        >
+          Zanaatla <em className="text-gold not-italic font-medium">Şekillenen</em> Duruş.
+        </h1>
+        <p data-hero-reveal className="mt-7 max-w-lg text-base leading-relaxed text-warm-white/75 sm:text-lg">
+          Klasik berberliğin özenini modern bir atmosferde yaşayın. Saç, sakal ve bakımda randevulu,
+          kişiye özel hizmet.
+        </p>
+        <div data-hero-reveal className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
+          <Button asChild size="lg">
+            <Link href="/randevu">Randevu Al</Link>
+          </Button>
+          <Button asChild size="lg" variant="outline">
+            <Link href="/hizmetler">Hizmetleri Keşfet</Link>
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}

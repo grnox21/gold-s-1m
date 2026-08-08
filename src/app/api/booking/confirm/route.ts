@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { createServiceClient } from "@/lib/supabase/service";
-import { confirmHold, suggestAlternatives, calculateDuration } from "@/lib/booking/engine";
+import { confirmHold, suggestAlternatives } from "@/lib/booking/engine";
 import { notifyAppointment } from "@/lib/whatsapp/send";
 import { dateStringFromInstant, formatIstanbulTime } from "@/lib/booking/time";
 import type { Barber } from "@/types/database";
