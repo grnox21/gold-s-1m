@@ -34,3 +34,14 @@ export const env = {
     return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   },
 };
+
+/**
+ * True only when every Supabase env var needed by the service client is
+ * present. Callers use this to degrade gracefully (render defaults) instead
+ * of crashing when Supabase hasn't been connected yet.
+ */
+export function isSupabaseConfigured(): boolean {
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}

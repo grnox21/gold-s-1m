@@ -1,9 +1,11 @@
 import "server-only";
 
 import { createServiceClient } from "@/lib/supabase/service";
+import { isSupabaseConfigured } from "@/lib/env";
 import type { Barber, Service, SiteSetting } from "@/types/database";
 
 export async function getActiveBarbers(): Promise<Barber[]> {
+  if (!isSupabaseConfigured()) return [];
   const supabase = createServiceClient();
   const { data } = await supabase
     .from("barbers")
@@ -14,6 +16,7 @@ export async function getActiveBarbers(): Promise<Barber[]> {
 }
 
 export async function getBarberBySlug(slug: string): Promise<Barber | null> {
+  if (!isSupabaseConfigured()) return null;
   const supabase = createServiceClient();
   const { data } = await supabase
     .from("barbers")
@@ -25,6 +28,7 @@ export async function getBarberBySlug(slug: string): Promise<Barber | null> {
 }
 
 export async function getActiveServices(): Promise<Service[]> {
+  if (!isSupabaseConfigured()) return [];
   const supabase = createServiceClient();
   const { data } = await supabase
     .from("services")
@@ -49,6 +53,7 @@ const SETTINGS_DEFAULTS: SiteSettingsMap = {
 };
 
 export async function getSiteSettings(): Promise<SiteSettingsMap> {
+  if (!isSupabaseConfigured()) return { ...SETTINGS_DEFAULTS };
   const supabase = createServiceClient();
   const { data } = await supabase.from("site_settings").select("*");
   const map = { ...SETTINGS_DEFAULTS };
