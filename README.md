@@ -27,7 +27,12 @@ npm run dev
    insert into admin_users (auth_user_id, full_name, role)
    values ('<auth kullanıcısının UUID''si>', 'Adınız', 'owner');
    ```
-6. `/api/cron/reminders` dakikada bir Vercel Cron ile çalışır (bkz. `vercel.json`). **Bunun için Vercel Pro (ücretli plan) gerekir** — ücretsiz Hobby planı yalnızca günde-bir cron zamanlamasına izin veriyor ve dakikalık bir girdi Hobby planında deploy'un tamamını başarısız kılıyor. Hobby planında kalacaksanız `vercel.json`'daki `crons` dizisini boşaltın ve bunun yerine ücretsiz bir dış "pinger" servisi (ör. [cron-job.org](https://cron-job.org)) veya Supabase `pg_cron` + `pg_net` ile aynı URL'yi dakikada bir çağırtın. Hangi yöntemi kullanırsanız kullanın, `.env`'de `CRON_SECRET` tanımlayın — istek `Authorization: Bearer $CRON_SECRET` header'ıyla doğrulanıyor.
+6. `/api/cron/reminders`'ı dakikada bir tetikleyecek bir şey kurun — bu proje varsayılan olarak Vercel Cron'a bağlı **değildir**, çünkü Vercel'in ücretsiz (Hobby) planı yalnızca günde-bir cron zamanlamasına izin veriyor ve `vercel.json`'a dakikalık bir cron eklemek Hobby planında **deploy'un tamamını** başarısız kılıyor. Üç seçenek:
+   - **Ücretsiz dış "pinger" servisi** (en kolayı, plan gerektirmez): [cron-job.org](https://cron-job.org) gibi bir servisle bu URL'yi her dakika, `Authorization: Bearer <CRON_SECRET>` header'ıyla çağırtın.
+   - Supabase'de `pg_cron` + `pg_net` uzantılarını açıp aynı URL'yi bir zamanlamayla çağırın.
+   - Vercel Pro'ya (ücretli plan) geçip `vercel.json`'a orijinal dakikalık cron girdisini geri ekleyin.
+
+   Hangisini seçerseniz seçin, `.env`'de `CRON_SECRET` tanımlayın ve isteği `Authorization: Bearer $CRON_SECRET` header'ıyla gönderin.
 
 Migration'lar hakkında detay için `supabase/README.md`'ye bakın — orada gerçek bir PostgreSQL 16 üzerinde doğrulanan şema ve **çifte rezervasyon koruması testinin** dökümü de var.
 
