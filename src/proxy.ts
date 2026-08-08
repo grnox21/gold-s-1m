@@ -8,10 +8,13 @@ import { env } from "@/lib/env";
  * @supabase/ssr — an unrefreshed cookie leads to random logouts) and blocks
  * unauthenticated access to /admin/* before any admin page even renders.
  * The actual "is this user an admin" check (admin_users lookup) happens
- * again per-request in app/admin/layout.tsx — this middleware only proves
+ * again per-request in app/admin/layout.tsx — this proxy only proves
  * "there is a valid Supabase session", which is cheap and fast.
+ *
+ * Named `proxy` (not `middleware`) per the Next.js 16 convention — same
+ * mechanism, new file/function name.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {

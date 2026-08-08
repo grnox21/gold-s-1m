@@ -48,16 +48,22 @@ export function formatIstanbulDateLong(date: Date): string {
   }).format(date);
 }
 
-/** Today's Istanbul calendar date as "YYYY-MM-DD", for min-date checks etc. */
-export function todayIstanbul(): string {
+/** "YYYY-MM-DD" Istanbul calendar date for any instant, e.g. to re-derive
+ * the day a stored appointment's start_at falls on. */
+export function dateStringFromInstant(date: Date): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Istanbul",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).formatToParts(new Date());
+  }).formatToParts(date);
   const get = (t: string) => parts.find((p) => p.type === t)?.value;
   return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+/** Today's Istanbul calendar date as "YYYY-MM-DD", for min-date checks etc. */
+export function todayIstanbul(): string {
+  return dateStringFromInstant(new Date());
 }
 
 export function nowIstanbulMinutesSinceMidnight(dateStr: string): number {
