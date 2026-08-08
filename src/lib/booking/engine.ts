@@ -45,6 +45,7 @@ export class BookingError extends Error {
       | "outside_working_hours"
       | "barber_inactive"
       | "not_found"
+      | "forbidden"
       | "unknown",
     message: string
   ) {

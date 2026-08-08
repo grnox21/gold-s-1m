@@ -2,13 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireAdmin } from "@/lib/auth/admin";
+import { requireFullAdmin } from "@/lib/auth/admin";
 import { createServiceClient } from "@/lib/supabase/service";
 import { siteSettingsSchema } from "@/lib/validations/admin";
 import type { ActionResult } from "@/lib/admin/types";
 
 export async function saveSiteSettings(input: unknown): Promise<ActionResult> {
-  await requireAdmin();
+  await requireFullAdmin();
   const parsed = siteSettingsSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Geçersiz form." };
 

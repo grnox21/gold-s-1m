@@ -18,24 +18,28 @@ import {
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/admin/randevular", label: "Randevular", icon: CalendarRange },
-  { href: "/admin/takvim", label: "Takvim", icon: CalendarDays },
-  { href: "/admin/berberler", label: "Berberler", icon: UserCircle },
-  { href: "/admin/hizmetler", label: "Hizmetler", icon: Scissors },
-  { href: "/admin/musteriler", label: "Müşteriler", icon: Users },
-  { href: "/admin/calisma-saatleri", label: "Çalışma Saatleri", icon: Clock },
-  { href: "/admin/engellenen-saatler", label: "Engellenen Saatler", icon: Ban },
-  { href: "/admin/whatsapp-ayarlari", label: "WhatsApp Ayarları", icon: MessageCircle },
-  { href: "/admin/site-ayarlari", label: "Site Ayarları", icon: Settings },
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true, fullAdminOnly: false },
+  { href: "/admin/randevular", label: "Randevular", icon: CalendarRange, fullAdminOnly: false },
+  { href: "/admin/takvim", label: "Takvim", icon: CalendarDays, fullAdminOnly: false },
+  { href: "/admin/berberler", label: "Berberler", icon: UserCircle, fullAdminOnly: true },
+  { href: "/admin/hizmetler", label: "Hizmetler", icon: Scissors, fullAdminOnly: true },
+  { href: "/admin/musteriler", label: "Müşteriler", icon: Users, fullAdminOnly: true },
+  { href: "/admin/calisma-saatleri", label: "Çalışma Saatleri", icon: Clock, fullAdminOnly: true },
+  { href: "/admin/engellenen-saatler", label: "Engellenen Saatler", icon: Ban, fullAdminOnly: true },
+  { href: "/admin/whatsapp-ayarlari", label: "WhatsApp Ayarları", icon: MessageCircle, fullAdminOnly: true },
+  { href: "/admin/site-ayarlari", label: "Site Ayarları", icon: Settings, fullAdminOnly: true },
 ];
 
-export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+// A 'barber' login only gets Dashboard/Randevular/Takvim — the rest is
+// owner/admin-only, enforced again server-side by requireFullAdmin() on
+// each of those pages (this filter is just UX, not the security boundary).
+export function SidebarNav({ onNavigate, isFullAdmin = true }: { onNavigate?: () => void; isFullAdmin?: boolean }) {
   const pathname = usePathname();
+  const items = isFullAdmin ? NAV : NAV.filter((item) => !item.fullAdminOnly);
 
   return (
     <nav className="flex flex-col gap-0.5">
-      {NAV.map((item) => {
+      {items.map((item) => {
         const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
         return (
           <Link

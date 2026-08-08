@@ -8,6 +8,7 @@ import { signOut } from "./actions";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { admin } = await requireAdmin();
+  const isFullAdmin = admin.role !== "barber";
 
   return (
     <div className="min-h-screen bg-ink text-foreground">
@@ -17,10 +18,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <p className="font-display text-lg text-warm-white">
               Yusuf <span className="text-gold">Demir</span>
             </p>
-            <p className="label-caps text-[0.58rem] text-ash">Admin Panel</p>
+            <p className="label-caps text-[0.58rem] text-ash">{isFullAdmin ? "Admin Panel" : "Berber Paneli"}</p>
           </Link>
           <div className="flex-1 overflow-y-auto">
-            <SidebarNav />
+            <SidebarNav isFullAdmin={isFullAdmin} />
           </div>
           <div className="border-t border-border pt-4">
             <p className="truncate text-xs text-ash">{admin.full_name}</p>
@@ -37,7 +38,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <p className="font-display text-lg text-warm-white">
               Yusuf <span className="text-gold">Demir</span>
             </p>
-            <MobileSidebar />
+            <MobileSidebar isFullAdmin={isFullAdmin} />
           </header>
           <main className="p-5 lg:p-10">{children}</main>
         </div>

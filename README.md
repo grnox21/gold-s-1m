@@ -19,14 +19,20 @@ npm run dev
 ## Supabase Kurulumu
 
 1. [supabase.com](https://supabase.com) üzerinde bir proje oluşturun (veya self-host edin).
-2. **SQL Editor** → `supabase/migrations/` altındaki dosyaları **sırayla** (0001 → 0008) çalıştırın.
+2. **SQL Editor** → `supabase/migrations/` altındaki dosyaları **sırayla** (0001 → 0009) çalıştırın.
 3. `supabase/seed.sql` dosyasını çalıştırın — 3 yer tutucu berber, 8 hizmet ve çalışma saatleri ekler; hepsi `/admin` üzerinden düzenlenebilir.
 4. Project Settings → API'den `URL`, `anon key` ve `service_role key` değerlerini alıp `.env.local`'e yazın.
-5. İlk admin hesabınızı oluşturun: Authentication → Users'dan bir kullanıcı ekleyin, sonra SQL Editor'de:
+5. İlk admin hesabınızı oluşturun (işletme sahibi/genel yönetici — tüm berberlerin tüm randevularını görür): Authentication → Users'dan bir kullanıcı ekleyin, sonra SQL Editor'de:
    ```sql
    insert into admin_users (auth_user_id, full_name, role)
    values ('<auth kullanıcısının UUID''si>', 'Adınız', 'owner');
    ```
+5b. **Her berbere kendi randevularını görebileceği ayrı bir giriş** vermek isterseniz (sadece o berberin randevuları — `/admin`'in geri kalanı görünmez), aynı adımları `role: 'barber'` ile ve o berberin `barbers` tablosundaki `id`'siyle tekrarlayın:
+   ```sql
+   insert into admin_users (auth_user_id, full_name, role, barber_id)
+   values ('<auth kullanıcısının UUID''si>', 'Berberin Adı', 'barber', '<barbers.id>');
+   ```
+   `barbers.id`'yi bulmak için: `select id, name from barbers;`
 6. `/api/cron/reminders`'ı dakikada bir tetikleyecek bir şey kurun — bu proje varsayılan olarak Vercel Cron'a bağlı **değildir**, çünkü Vercel'in ücretsiz (Hobby) planı yalnızca günde-bir cron zamanlamasına izin veriyor ve `vercel.json`'a dakikalık bir cron eklemek Hobby planında **deploy'un tamamını** başarısız kılıyor. Üç seçenek:
    - **Ücretsiz dış "pinger" servisi** (en kolayı, plan gerektirmez): [cron-job.org](https://cron-job.org) gibi bir servisle bu URL'yi her dakika, `Authorization: Bearer <CRON_SECRET>` header'ıyla çağırtın.
    - Supabase'de `pg_cron` + `pg_net` uzantılarını açıp aynı URL'yi bir zamanlamayla çağırın.

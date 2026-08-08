@@ -6,7 +6,7 @@ import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { SidebarNav } from "./sidebar";
 
-export function MobileSidebar() {
+export function MobileSidebar({ isFullAdmin = true }: { isFullAdmin?: boolean }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -21,7 +21,7 @@ export function MobileSidebar() {
           <SheetTitle>Yusuf Demir · Admin</SheetTitle>
         </SheetHeader>
         <div className="mt-4">
-          <SidebarNav onNavigate={() => setOpen(false)} />
+          <SidebarNav onNavigate={() => setOpen(false)} isFullAdmin={isFullAdmin} />
         </div>
       </SheetContent>
     </Sheet>

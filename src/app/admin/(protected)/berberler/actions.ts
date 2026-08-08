@@ -2,13 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireAdmin } from "@/lib/auth/admin";
+import { requireFullAdmin } from "@/lib/auth/admin";
 import { createServiceClient } from "@/lib/supabase/service";
 import { barberSchema } from "@/lib/validations/admin";
 import type { ActionResult } from "@/lib/admin/types";
 
 export async function createBarber(input: unknown): Promise<ActionResult> {
-  await requireAdmin();
+  await requireFullAdmin();
   const parsed = barberSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Geçersiz form." };
 
@@ -34,7 +34,7 @@ export async function createBarber(input: unknown): Promise<ActionResult> {
 }
 
 export async function updateBarber(id: string, input: unknown): Promise<ActionResult> {
-  await requireAdmin();
+  await requireFullAdmin();
   const parsed = barberSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Geçersiz form." };
 
@@ -60,7 +60,7 @@ export async function updateBarber(id: string, input: unknown): Promise<ActionRe
 }
 
 export async function deleteBarber(id: string): Promise<ActionResult> {
-  await requireAdmin();
+  await requireFullAdmin();
   const supabase = createServiceClient();
   const { error } = await supabase.from("barbers").delete().eq("id", id);
   if (error) return { ok: false, error: "Berber silinemedi. Randevu geçmişi olan berberleri pasif yapmanız önerilir." };

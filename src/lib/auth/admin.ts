@@ -6,6 +6,19 @@ import { createServiceClient } from "@/lib/supabase/service";
 import type { AdminUser } from "@/types/database";
 
 /**
+ * 'barber' logins only ever see their own appointments — every other
+ * /admin section (berberler, hizmetler, müşteriler, saatler, ayarlar...)
+ * is owner/admin-only. Call this at the top of those pages AND their
+ * server actions (a barber account could otherwise call the action
+ * directly, bypassing a UI-only guard).
+ */
+export async function requireFullAdmin(): Promise<{ userId: string; email: string | null; admin: AdminUser }> {
+  const result = await requireAdmin();
+  if (result.admin.role === "barber") redirect("/admin");
+  return result;
+}
+
+/**
  * Confirms the current request carries both a valid Supabase Auth session
  * AND a matching admin_users row, redirecting to /admin/login otherwise.
  * Use at the top of admin Server Components, layouts, and Server Actions.

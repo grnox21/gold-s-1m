@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { createServiceClient } from "@/lib/supabase/service";
+import { requireAdmin } from "@/lib/auth/admin";
 import { getAppointmentsForRange, type AppointmentWithServices } from "@/lib/admin/calendar-data";
 import { todayIstanbul, formatIstanbulTime } from "@/lib/booking/time";
 import { AdminPageHeading } from "@/components/admin/page-heading";
@@ -39,6 +40,9 @@ function endOfMonth(dateStr: string): string {
 }
 
 export default async function AdminCalendarPage({ searchParams }: PageProps<"/admin/takvim">) {
+  const { admin } = await requireAdmin();
+  const isBarber = admin.role === "barber";
+
   const params = await searchParams;
   const view: View = params.view === "week" || params.view === "month" ? params.view : "day";
   const date = typeof params.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(params.date) ? params.date : todayIstanbul();
@@ -47,10 +51,11 @@ export default async function AdminCalendarPage({ searchParams }: PageProps<"/ad
   const rangeEnd = view === "day" ? date : view === "week" ? addDays(startOfWeek(date), 6) : endOfMonth(date);
 
   const [appointments, barbersRes] = await Promise.all([
-    getAppointmentsForRange(rangeStart, rangeEnd),
+    getAppointmentsForRange(rangeStart, rangeEnd, isBarber ? admin.barber_id : null),
     createServiceClient().from("barbers").select("*"),
   ]);
-  const barbers = (barbersRes.data ?? []) as Barber[];
+  const allBarbers = (barbersRes.data ?? []) as Barber[];
+  const barbers = isBarber ? allBarbers.filter((b) => b.id === admin.barber_id) : allBarbers;
 
   const prevDate = view === "day" ? addDays(date, -1) : view === "week" ? addDays(date, -7) : addDays(startOfMonth(date), -1);
   const nextDate = view === "day" ? addDays(date, 1) : view === "week" ? addDays(date, 7) : addDays(endOfMonth(date), 1);

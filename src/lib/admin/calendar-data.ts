@@ -9,19 +9,30 @@ export type AppointmentWithServices = Appointment & {
   barberName: string;
 };
 
-export async function getAppointmentsForRange(startDate: string, endDate: string): Promise<AppointmentWithServices[]> {
+/**
+ * @param barberId When set (a 'barber'-role admin), only that barber's
+ * appointments come back — same reasoning as getDashboardStats.
+ */
+export async function getAppointmentsForRange(
+  startDate: string,
+  endDate: string,
+  barberId?: string | null
+): Promise<AppointmentWithServices[]> {
   const supabase = createServiceClient();
   const rangeStart = istanbulDateTime(startDate, "00:00:00").toISOString();
   const rangeEnd = istanbulDateTime(endDate, "23:59:59").toISOString();
 
+  let appointmentsQuery = supabase
+    .from("appointments")
+    .select("*, appointment_services(name_at_booking)")
+    .gte("start_at", rangeStart)
+    .lte("start_at", rangeEnd)
+    .neq("status", "held")
+    .order("start_at", { ascending: true });
+  if (barberId) appointmentsQuery = appointmentsQuery.eq("barber_id", barberId);
+
   const [{ data: appointmentsData }, { data: barbersData }] = await Promise.all([
-    supabase
-      .from("appointments")
-      .select("*, appointment_services(name_at_booking)")
-      .gte("start_at", rangeStart)
-      .lte("start_at", rangeEnd)
-      .neq("status", "held")
-      .order("start_at", { ascending: true }),
+    appointmentsQuery,
     supabase.from("barbers").select("*"),
   ]);
 

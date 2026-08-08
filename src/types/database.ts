@@ -136,7 +136,9 @@ export interface AdminUser {
   id: string;
   auth_user_id: string;
   full_name: string;
-  role: "admin" | "owner";
+  role: "admin" | "owner" | "barber";
+  /** Only set when role is 'barber' — scopes that login to a single barbers row. */
+  barber_id: string | null;
   created_at: string;
 }
 

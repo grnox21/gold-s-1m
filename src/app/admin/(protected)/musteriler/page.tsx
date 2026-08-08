@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { createServiceClient } from "@/lib/supabase/service";
+import { requireFullAdmin } from "@/lib/auth/admin";
 import type { Customer } from "@/types/database";
 import { AdminPageHeading } from "@/components/admin/page-heading";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,6 +10,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Müşteriler" };
 
 export default async function AdminCustomersPage() {
+  await requireFullAdmin();
   const supabase = createServiceClient();
   const { data: customers } = await supabase.from("customers").select("*").order("created_at", { ascending: false });
   const { data: appointments } = await supabase.from("appointments").select("customer_id, status");

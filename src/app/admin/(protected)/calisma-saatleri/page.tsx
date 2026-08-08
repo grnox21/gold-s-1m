@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { createServiceClient } from "@/lib/supabase/service";
+import { requireFullAdmin } from "@/lib/auth/admin";
 import type { Barber, WorkingHour } from "@/types/database";
 import { AdminPageHeading } from "@/components/admin/page-heading";
 import { WorkingHoursEditor } from "@/components/admin/working-hours-editor";
@@ -13,6 +14,7 @@ export const metadata: Metadata = { title: "Çalışma Saatleri" };
 export default async function AdminWorkingHoursPage({
   searchParams,
 }: PageProps<"/admin/calisma-saatleri">) {
+  await requireFullAdmin();
   const params = await searchParams;
   const supabase = createServiceClient();
   const { data: barbersData } = await supabase.from("barbers").select("*").order("sort_order");

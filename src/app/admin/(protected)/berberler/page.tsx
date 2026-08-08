@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus } from "lucide-react";
 
 import { createServiceClient } from "@/lib/supabase/service";
+import { requireFullAdmin } from "@/lib/auth/admin";
 import type { Barber } from "@/types/database";
 import { AdminPageHeading } from "@/components/admin/page-heading";
 import { BarberFormDialog } from "@/components/admin/barber-form-dialog";
@@ -14,6 +15,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Berberler" };
 
 export default async function AdminBarbersPage() {
+  await requireFullAdmin();
   const supabase = createServiceClient();
   const { data } = await supabase.from("barbers").select("*").order("sort_order");
   const barbers = (data ?? []) as Barber[];

@@ -22,7 +22,12 @@ export interface DashboardStats {
   barberPerformance: BarberPerformance[];
 }
 
-export async function getDashboardStats(): Promise<DashboardStats> {
+/**
+ * @param barberId When set (a 'barber'-role admin), every query below is
+ * scoped to that barber's own appointments only — used for the dashboard
+ * so a barber login never sees shop-wide numbers or other barbers' rows.
+ */
+export async function getDashboardStats(barberId?: string | null): Promise<DashboardStats> {
   const supabase = createServiceClient();
   const today = todayIstanbul();
   const todayStart = istanbulDateTime(today, "00:00:00").toISOString();
@@ -31,28 +36,37 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const monthStartDate = `${today.slice(0, 7)}-01`;
   const monthStart = istanbulDateTime(monthStartDate, "00:00:00").toISOString();
 
+  let todayQuery = supabase
+    .from("appointments")
+    .select("*")
+    .gte("start_at", todayStart)
+    .lte("start_at", todayEnd)
+    .in("status", ["pending", "confirmed", "completed"])
+    .order("start_at", { ascending: true });
+  let upcomingQuery = supabase
+    .from("appointments")
+    .select("*")
+    .gt("start_at", new Date().toISOString())
+    .in("status", ["pending", "confirmed"])
+    .order("start_at", { ascending: true })
+    .limit(8);
+  let monthQuery = supabase.from("appointments").select("*").gte("start_at", monthStart);
+  if (barberId) {
+    todayQuery = todayQuery.eq("barber_id", barberId);
+    upcomingQuery = upcomingQuery.eq("barber_id", barberId);
+    monthQuery = monthQuery.eq("barber_id", barberId);
+  }
+
   const [todayRes, upcomingRes, monthRes, barbersRes, customersRes] = await Promise.all([
-    supabase
-      .from("appointments")
-      .select("*")
-      .gte("start_at", todayStart)
-      .lte("start_at", todayEnd)
-      .in("status", ["pending", "confirmed", "completed"])
-      .order("start_at", { ascending: true }),
-    supabase
-      .from("appointments")
-      .select("*")
-      .gt("start_at", new Date().toISOString())
-      .in("status", ["pending", "confirmed"])
-      .order("start_at", { ascending: true })
-      .limit(8),
-    supabase.from("appointments").select("*").gte("start_at", monthStart),
+    todayQuery,
+    upcomingQuery,
+    monthQuery,
     supabase.from("barbers").select("*").eq("is_active", true).order("sort_order"),
     supabase.from("customers").select("id", { count: "exact", head: true }),
   ]);
 
   const monthAppointments = (monthRes.data ?? []) as Appointment[];
-  const barbers = (barbersRes.data ?? []) as Barber[];
+  const barbers = ((barbersRes.data ?? []) as Barber[]).filter((b) => !barberId || b.id === barberId);
 
   const monthRevenue = monthAppointments
     .filter((a) => a.status === "completed")

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus } from "lucide-react";
 
 import { createServiceClient } from "@/lib/supabase/service";
+import { requireFullAdmin } from "@/lib/auth/admin";
 import type { Barber, BlockedTime } from "@/types/database";
 import { AdminPageHeading } from "@/components/admin/page-heading";
 import { BlockedTimeFormDialog } from "@/components/admin/blocked-time-form-dialog";
@@ -22,6 +23,7 @@ const dtFormat = new Intl.DateTimeFormat("tr-TR", {
 });
 
 export default async function AdminBlockedTimesPage() {
+  await requireFullAdmin();
   const supabase = createServiceClient();
   const [{ data: blocksData }, { data: barbersData }] = await Promise.all([
     supabase.from("blocked_times").select("*").order("start_at", { ascending: false }),

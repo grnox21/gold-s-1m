@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CalendarClock, TrendingUp, Users, XCircle } from "lucide-react";
 
 import { getDashboardStats } from "@/lib/admin/dashboard-data";
+import { requireAdmin } from "@/lib/auth/admin";
 import { AdminPageHeading } from "@/components/admin/page-heading";
 import { AppointmentStatusBadge } from "@/components/admin/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,13 +16,17 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function AdminDashboardPage() {
-  const stats = await getDashboardStats();
+  const { admin } = await requireAdmin();
+  const isBarber = admin.role === "barber";
+  const stats = await getDashboardStats(isBarber ? admin.barber_id : null);
 
   const kpis = [
     { label: "Bugünkü Randevular", value: String(stats.todayCount), icon: CalendarClock },
     { label: "Bu Ay Ciro (Tamamlanan)", value: formatTL(stats.monthRevenue), icon: TrendingUp },
     { label: "Bu Ay Randevu Sayısı", value: String(stats.monthAppointmentCount), icon: CalendarClock },
-    { label: "Toplam Müşteri", value: String(stats.customerCount), icon: Users },
+    // Şop geneli bir sayı — sadece kendi randevularını gören berber
+    // hesabına yanıltıcı olur, sadece admin/owner'a gösterilir.
+    ...(isBarber ? [] : [{ label: "Toplam Müşteri", value: String(stats.customerCount), icon: Users }]),
     { label: "Bu Ay İptal", value: String(stats.monthCancelledCount), icon: XCircle },
   ];
 

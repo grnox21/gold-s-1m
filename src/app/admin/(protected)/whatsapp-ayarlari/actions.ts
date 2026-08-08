@@ -2,14 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireAdmin } from "@/lib/auth/admin";
+import { requireFullAdmin } from "@/lib/auth/admin";
 import { createServiceClient } from "@/lib/supabase/service";
 import { whatsappSettingsSchema } from "@/lib/validations/admin";
 import { createWhatsAppProvider } from "@/lib/whatsapp/factory";
 import type { ActionResult } from "@/lib/admin/types";
 
 export async function saveWhatsappSettings(input: unknown): Promise<ActionResult> {
-  await requireAdmin();
+  await requireFullAdmin();
   const parsed = whatsappSettingsSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Geçersiz form." };
 
@@ -30,7 +30,7 @@ export async function saveWhatsappSettings(input: unknown): Promise<ActionResult
 }
 
 export async function sendTestWhatsappMessage(phone: string): Promise<ActionResult> {
-  await requireAdmin();
+  await requireFullAdmin();
   if (!phone.trim()) return { ok: false, error: "Telefon numarası girin." };
 
   const supabase = createServiceClient();

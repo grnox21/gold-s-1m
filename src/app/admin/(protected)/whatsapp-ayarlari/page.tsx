@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { createServiceClient } from "@/lib/supabase/service";
+import { requireFullAdmin } from "@/lib/auth/admin";
 import type { WhatsAppSettings } from "@/types/database";
 import { AdminPageHeading } from "@/components/admin/page-heading";
 import { WhatsappSettingsForm } from "@/components/admin/whatsapp-settings-form";
@@ -9,6 +10,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "WhatsApp Ayarları" };
 
 export default async function AdminWhatsappSettingsPage() {
+  await requireFullAdmin();
   const supabase = createServiceClient();
   const { data } = await supabase.from("whatsapp_settings").select("*").eq("id", 1).maybeSingle();
   const settings = (data as WhatsAppSettings | null) ?? {

@@ -2,13 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireAdmin } from "@/lib/auth/admin";
+import { requireFullAdmin } from "@/lib/auth/admin";
 import { createServiceClient } from "@/lib/supabase/service";
 import { serviceSchema } from "@/lib/validations/admin";
 import type { ActionResult } from "@/lib/admin/types";
 
 export async function createService(input: unknown): Promise<ActionResult> {
-  await requireAdmin();
+  await requireFullAdmin();
   const parsed = serviceSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Geçersiz form." };
 
@@ -32,7 +32,7 @@ export async function createService(input: unknown): Promise<ActionResult> {
 }
 
 export async function updateService(id: string, input: unknown): Promise<ActionResult> {
-  await requireAdmin();
+  await requireFullAdmin();
   const parsed = serviceSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Geçersiz form." };
 
@@ -56,7 +56,7 @@ export async function updateService(id: string, input: unknown): Promise<ActionR
 }
 
 export async function deleteService(id: string): Promise<ActionResult> {
-  await requireAdmin();
+  await requireFullAdmin();
   const supabase = createServiceClient();
   const { error } = await supabase.from("services").delete().eq("id", id);
   if (error) return { ok: false, error: "Hizmet silinemedi. Geçmiş randevularda kullanılan hizmetleri pasif yapmanız önerilir." };

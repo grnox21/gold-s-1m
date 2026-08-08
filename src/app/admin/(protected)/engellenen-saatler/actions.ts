@@ -2,13 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireAdmin } from "@/lib/auth/admin";
+import { requireFullAdmin } from "@/lib/auth/admin";
 import { createServiceClient } from "@/lib/supabase/service";
 import { blockedTimeSchema } from "@/lib/validations/admin";
 import type { ActionResult } from "@/lib/admin/types";
 
 export async function createBlockedTime(input: unknown): Promise<ActionResult> {
-  const { admin } = await requireAdmin();
+  const { admin } = await requireFullAdmin();
   const parsed = blockedTimeSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Geçersiz form." };
 
@@ -32,7 +32,7 @@ export async function createBlockedTime(input: unknown): Promise<ActionResult> {
 }
 
 export async function deleteBlockedTime(id: string): Promise<ActionResult> {
-  await requireAdmin();
+  await requireFullAdmin();
   const supabase = createServiceClient();
   const { error } = await supabase.from("blocked_times").delete().eq("id", id);
   if (error) return { ok: false, error: "Silinemedi." };

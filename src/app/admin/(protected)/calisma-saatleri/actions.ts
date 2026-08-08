@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireAdmin } from "@/lib/auth/admin";
+import { requireFullAdmin } from "@/lib/auth/admin";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { ActionResult } from "@/lib/admin/types";
 
@@ -14,7 +14,7 @@ export interface WorkingHourRow {
 }
 
 export async function saveWorkingHours(barberId: string, rows: WorkingHourRow[]): Promise<ActionResult> {
-  await requireAdmin();
+  await requireFullAdmin();
 
   for (const row of rows) {
     if (!row.isClosed && (!row.startTime || !row.endTime || row.startTime >= row.endTime)) {

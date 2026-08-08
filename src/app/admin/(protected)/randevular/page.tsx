@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { createServiceClient } from "@/lib/supabase/service";
+import { requireAdmin } from "@/lib/auth/admin";
 import type { Appointment, AppointmentStatus, Barber, Service } from "@/types/database";
 import { AdminPageHeading } from "@/components/admin/page-heading";
 import { AppointmentStatusBadge } from "@/components/admin/status-badge";
@@ -35,9 +36,14 @@ const dtFormat = new Intl.DateTimeFormat("tr-TR", {
 export default async function AdminAppointmentsPage({
   searchParams,
 }: PageProps<"/admin/randevular">) {
+  const { admin } = await requireAdmin();
+  const isBarber = admin.role === "barber";
+
   const params = await searchParams;
   const statusFilter = typeof params.status === "string" ? params.status : "all";
-  const barberFilter = typeof params.barber === "string" ? params.barber : "all";
+  // A barber login can never see another barber's appointments, no matter
+  // what ?barber= is in the URL — force it to their own id.
+  const barberFilter = isBarber ? (admin.barber_id ?? "all") : typeof params.barber === "string" ? params.barber : "all";
 
   const supabase = createServiceClient();
   let query = supabase.from("appointments").select("*").order("start_at", { ascending: false }).limit(200);
@@ -51,9 +57,13 @@ export default async function AdminAppointmentsPage({
   ]);
 
   const appointments = (appointmentsData ?? []) as Appointment[];
-  const barbers = (barbersData ?? []) as Barber[];
+  const allBarbers = (barbersData ?? []) as Barber[];
+  // Same idea for the "berber ekle" dropdown on the new-appointment dialog
+  // and the reassign control in row actions: a barber account only ever
+  // sees themselves as an option.
+  const barbers = isBarber ? allBarbers.filter((b) => b.id === admin.barber_id) : allBarbers;
   const services = (servicesData ?? []) as Service[];
-  const barberName = (id: string) => barbers.find((b) => b.id === id)?.name ?? "—";
+  const barberName = (id: string) => allBarbers.find((b) => b.id === id)?.name ?? "—";
 
   const buildHref = (next: { status?: string; barber?: string }) => {
     const sp = new URLSearchParams();
@@ -85,29 +95,34 @@ export default async function AdminAppointmentsPage({
             </Link>
           ))}
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href={buildHref({ barber: "all" })}
-            className={cn(
-              "label-caps rounded-full border px-3.5 py-1.5 text-[0.6rem] transition-colors",
-              barberFilter === "all" ? "border-gold bg-gold/10 text-gold-bright" : "border-border-strong text-ash hover:text-warm-white"
-            )}
-          >
-            Tüm Berberler
-          </Link>
-          {barbers.map((b) => (
+        {/* A barber login only ever has one barber to filter by, so the
+            chip row would be pointless — and would leak that other
+            barbers exist. */}
+        {!isBarber && (
+          <div className="flex flex-wrap gap-2">
             <Link
-              key={b.id}
-              href={buildHref({ barber: b.id })}
+              href={buildHref({ barber: "all" })}
               className={cn(
                 "label-caps rounded-full border px-3.5 py-1.5 text-[0.6rem] transition-colors",
-                barberFilter === b.id ? "border-gold bg-gold/10 text-gold-bright" : "border-border-strong text-ash hover:text-warm-white"
+                barberFilter === "all" ? "border-gold bg-gold/10 text-gold-bright" : "border-border-strong text-ash hover:text-warm-white"
               )}
             >
-              {b.name}
+              Tüm Berberler
             </Link>
-          ))}
-        </div>
+            {allBarbers.map((b) => (
+              <Link
+                key={b.id}
+                href={buildHref({ barber: b.id })}
+                className={cn(
+                  "label-caps rounded-full border px-3.5 py-1.5 text-[0.6rem] transition-colors",
+                  barberFilter === b.id ? "border-gold bg-gold/10 text-gold-bright" : "border-border-strong text-ash hover:text-warm-white"
+                )}
+              >
+                {b.name}
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="overflow-hidden rounded-md border border-border">
