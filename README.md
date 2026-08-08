@@ -27,7 +27,9 @@ npm run dev
    insert into admin_users (auth_user_id, full_name, role)
    values ('<auth kullanıcısının UUID''si>', 'Adınız', 'owner');
    ```
-5b. **Her berbere kendi randevularını görebileceği ayrı bir giriş** vermek isterseniz (sadece o berberin randevuları — `/admin`'in geri kalanı görünmez), aynı adımları `role: 'barber'` ile ve o berberin `barbers` tablosundaki `id`'siyle tekrarlayın:
+5b. **Her berbere kendi randevularını görebileceği ayrı bir giriş** vermek isterseniz (sadece o berberin randevuları — `/admin`'in geri kalanı görünmez), bunu artık panelden yapabilirsiniz: `owner`/`admin` hesabıyla giriş yapıp **Berberler** sayfasına gidin, ilgili berberin satırındaki **"Giriş Hesabı Oluştur"** butonuna tıklayıp e-posta/şifre girin — Supabase Auth kullanıcısını oluşturmak ve `admin_users`'a `role: 'barber'` olarak bağlamak tek adımda olur. (Aynı satırdaki çöp kutusu ikonu hesabı kaldırır.)
+
+   Panelsiz, doğrudan SQL ile yapmak isterseniz alternatif:
    ```sql
    insert into admin_users (auth_user_id, full_name, role, barber_id)
    values ('<auth kullanıcısının UUID''si>', 'Berberin Adı', 'barber', '<barbers.id>');

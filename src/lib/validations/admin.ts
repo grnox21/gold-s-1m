@@ -16,6 +16,12 @@ export const barberSchema = z.object({
 });
 export type BarberFormValues = z.infer<typeof barberSchema>;
 
+export const barberLoginSchema = z.object({
+  email: z.string().trim().email("Geçerli bir e-posta girin."),
+  password: z.string().min(6, "Şifre en az 6 karakter olmalı."),
+});
+export type BarberLoginFormValues = z.infer<typeof barberLoginSchema>;
+
 export const serviceSchema = z.object({
   name: z.string().trim().min(2).max(120),
   description: z.string().trim().max(500).optional().or(z.literal("")),
