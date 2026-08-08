@@ -1,4 +1,4 @@
--- Lets an individual barber log into /admin and see only their own
+-- Lets an individual barber log into /giris and see only their own
 -- appointments, instead of every admin_users row having full-shop access.
 --
 -- admin_users.role gains a third value, 'barber', and a nullable barber_id

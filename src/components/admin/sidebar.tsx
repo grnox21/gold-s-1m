@@ -19,17 +19,17 @@ import {
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true, fullAdminOnly: false },
-  { href: "/admin/randevular", label: "Randevular", icon: CalendarRange, fullAdminOnly: false },
-  { href: "/admin/takvim", label: "Takvim", icon: CalendarDays, fullAdminOnly: false },
-  { href: "/admin/rapor", label: "Berber Raporu", icon: BarChart3, fullAdminOnly: true },
-  { href: "/admin/berberler", label: "Berberler", icon: UserCircle, fullAdminOnly: true },
-  { href: "/admin/hizmetler", label: "Hizmetler", icon: Scissors, fullAdminOnly: true },
-  { href: "/admin/musteriler", label: "Müşteriler", icon: Users, fullAdminOnly: true },
-  { href: "/admin/calisma-saatleri", label: "Çalışma Saatleri", icon: Clock, fullAdminOnly: true },
-  { href: "/admin/engellenen-saatler", label: "Engellenen Saatler", icon: Ban, fullAdminOnly: true },
-  { href: "/admin/whatsapp-ayarlari", label: "WhatsApp Ayarları", icon: MessageCircle, fullAdminOnly: true },
-  { href: "/admin/site-ayarlari", label: "Site Ayarları", icon: Settings, fullAdminOnly: true },
+  { href: "/giris", label: "Dashboard", icon: LayoutDashboard, exact: true, fullAdminOnly: false },
+  { href: "/giris/randevular", label: "Randevular", icon: CalendarRange, fullAdminOnly: false },
+  { href: "/giris/takvim", label: "Takvim", icon: CalendarDays, fullAdminOnly: false },
+  { href: "/giris/rapor", label: "Berber Raporu", icon: BarChart3, fullAdminOnly: true },
+  { href: "/giris/berberler", label: "Berberler", icon: UserCircle, fullAdminOnly: true },
+  { href: "/giris/hizmetler", label: "Hizmetler", icon: Scissors, fullAdminOnly: true },
+  { href: "/giris/musteriler", label: "Müşteriler", icon: Users, fullAdminOnly: true },
+  { href: "/giris/calisma-saatleri", label: "Çalışma Saatleri", icon: Clock, fullAdminOnly: true },
+  { href: "/giris/engellenen-saatler", label: "Engellenen Saatler", icon: Ban, fullAdminOnly: true },
+  { href: "/giris/whatsapp-ayarlari", label: "WhatsApp Ayarları", icon: MessageCircle, fullAdminOnly: true },
+  { href: "/giris/site-ayarlari", label: "Site Ayarları", icon: Settings, fullAdminOnly: true },
 ];
 
 // A 'barber' login only gets Dashboard/Randevular/Takvim — the rest is

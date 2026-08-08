@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { barberSchema, type BarberFormValues } from "@/lib/validations/admin";
 import type { Barber } from "@/types/database";
-import { createBarber, updateBarber } from "@/app/admin/(protected)/berberler/actions";
+import { createBarber, updateBarber } from "@/app/giris/(protected)/berberler/actions";
 
 function slugify(value: string) {
   return value

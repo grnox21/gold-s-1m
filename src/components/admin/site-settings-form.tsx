@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { siteSettingsSchema, type SiteSettingsFormValues } from "@/lib/validations/admin";
 import type { SiteSettingsMap } from "@/lib/site-data";
-import { saveSiteSettings } from "@/app/admin/(protected)/site-ayarlari/actions";
+import { saveSiteSettings } from "@/app/giris/(protected)/site-ayarlari/actions";
 
 export function SiteSettingsForm({ settings }: { settings: SiteSettingsMap }) {
   const {

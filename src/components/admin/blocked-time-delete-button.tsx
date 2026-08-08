@@ -5,7 +5,7 @@ import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { deleteBlockedTime } from "@/app/admin/(protected)/engellenen-saatler/actions";
+import { deleteBlockedTime } from "@/app/giris/(protected)/engellenen-saatler/actions";
 
 export function BlockedTimeDeleteButton({ id }: { id: string }) {
   const [deleting, setDeleting] = useState(false);

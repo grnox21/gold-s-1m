@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { serviceSchema } from "@/lib/validations/admin";
 import type { z } from "zod";
 import type { Service } from "@/types/database";
-import { createService, updateService } from "@/app/admin/(protected)/hizmetler/actions";
+import { createService, updateService } from "@/app/giris/(protected)/hizmetler/actions";
 
 // price/durationMinutes use z.coerce, so the raw form input type (what
 // register() manages) differs from the coerced output type onSubmit

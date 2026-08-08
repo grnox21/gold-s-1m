@@ -7,22 +7,22 @@ import type { AdminUser } from "@/types/database";
 
 /**
  * 'barber' logins only ever see their own appointments — every other
- * /admin section (berberler, hizmetler, müşteriler, saatler, ayarlar...)
+ * /giris section (berberler, hizmetler, müşteriler, saatler, ayarlar...)
  * is owner/admin-only. Call this at the top of those pages AND their
  * server actions (a barber account could otherwise call the action
  * directly, bypassing a UI-only guard).
  */
 export async function requireFullAdmin(): Promise<{ userId: string; email: string | null; admin: AdminUser }> {
   const result = await requireAdmin();
-  if (result.admin.role === "barber") redirect("/admin");
+  if (result.admin.role === "barber") redirect("/giris");
   return result;
 }
 
 /**
  * Confirms the current request carries both a valid Supabase Auth session
- * AND a matching admin_users row, redirecting to /admin/login otherwise.
+ * AND a matching admin_users row, redirecting to /giris/login otherwise.
  * Use at the top of admin Server Components, layouts, and Server Actions.
- * (Route Handlers under /admin/api, if any are added later, should use
+ * (Route Handlers under /giris/api, if any are added later, should use
  * this too rather than trusting middleware alone — middleware only proves
  * "logged in", not "is an admin".)
  */
@@ -32,7 +32,7 @@ export async function requireAdmin(): Promise<{ userId: string; email: string | 
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/admin/login");
+  if (!user) redirect("/giris/login");
 
   const service = createServiceClient();
   const { data: admin } = await service
@@ -41,7 +41,7 @@ export async function requireAdmin(): Promise<{ userId: string; email: string | 
     .eq("auth_user_id", user.id)
     .maybeSingle();
 
-  if (!admin) redirect("/admin/login?error=yetkisiz");
+  if (!admin) redirect("/giris/login?error=yetkisiz");
 
   return { userId: user.id, email: user.email ?? null, admin: admin as AdminUser };
 }

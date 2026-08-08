@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { BarberFormDialog } from "./barber-form-dialog";
-import { deleteBarber } from "@/app/admin/(protected)/berberler/actions";
+import { deleteBarber } from "@/app/giris/(protected)/berberler/actions";
 import type { Barber } from "@/types/database";
 
 export function BarberRowActions({ barber }: { barber: Barber }) {

@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { whatsappSettingsSchema, type WhatsappSettingsFormValues } from "@/lib/validations/admin";
 import type { WhatsAppSettings } from "@/types/database";
-import { saveWhatsappSettings, sendTestWhatsappMessage } from "@/app/admin/(protected)/whatsapp-ayarlari/actions";
+import { saveWhatsappSettings, sendTestWhatsappMessage } from "@/app/giris/(protected)/whatsapp-ayarlari/actions";
 
 const PROVIDER_LABELS: Record<string, string> = {
   click_to_chat: "Click-to-Chat (varsayılan)",

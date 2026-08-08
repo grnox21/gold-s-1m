@@ -19,9 +19,9 @@ import type { ActionResult } from "@/lib/admin/types";
 import type { AdminUser } from "@/types/database";
 
 function revalidateAppointmentPaths() {
-  revalidatePath("/admin/randevular");
-  revalidatePath("/admin/takvim");
-  revalidatePath("/admin");
+  revalidatePath("/giris/randevular");
+  revalidatePath("/giris/takvim");
+  revalidatePath("/giris");
 }
 
 /**

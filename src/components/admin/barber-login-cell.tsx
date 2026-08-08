@@ -20,7 +20,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { barberLoginSchema, type BarberLoginFormValues } from "@/lib/validations/admin";
-import { createBarberLogin, deleteBarberLogin } from "@/app/admin/(protected)/berberler/login-actions";
+import { createBarberLogin, deleteBarberLogin } from "@/app/giris/(protected)/berberler/login-actions";
 import type { Barber } from "@/types/database";
 
 export function BarberLoginCell({ barber, login }: { barber: Barber; login: { authUserId: string; email: string | null } | null }) {
@@ -75,7 +75,7 @@ export function BarberLoginCell({ barber, login }: { barber: Barber; login: { au
             <DialogHeader>
               <DialogTitle>Giriş hesabı kaldırılsın mı?</DialogTitle>
               <DialogDescription>
-                {barber.name} artık `/admin/login`&apos;dan giriş yapamayacak. Bu işlem geri alınamaz.
+                {barber.name} artık `/giris/login`&apos;dan giriş yapamayacak. Bu işlem geri alınamaz.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -109,7 +109,7 @@ export function BarberLoginCell({ barber, login }: { barber: Barber; login: { au
         <DialogHeader>
           <DialogTitle>{barber.name} için Giriş Hesabı</DialogTitle>
           <DialogDescription>
-            Bu berber `/admin/login`&apos;dan bu bilgilerle giriş yapıp sadece kendi randevularını görebilecek.
+            Bu berber `/giris/login`&apos;dan bu bilgilerle giriş yapıp sadece kendi randevularını görebilecek.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

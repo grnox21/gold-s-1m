@@ -26,7 +26,7 @@ export async function createBlockedTime(input: unknown): Promise<ActionResult> {
   });
 
   if (error) return { ok: false, error: "Engellenen saat eklenemedi." };
-  revalidatePath("/admin/engellenen-saatler");
+  revalidatePath("/giris/engellenen-saatler");
   revalidatePath("/randevu");
   return { ok: true };
 }
@@ -36,7 +36,7 @@ export async function deleteBlockedTime(id: string): Promise<ActionResult> {
   const supabase = createServiceClient();
   const { error } = await supabase.from("blocked_times").delete().eq("id", id);
   if (error) return { ok: false, error: "Silinemedi." };
-  revalidatePath("/admin/engellenen-saatler");
+  revalidatePath("/giris/engellenen-saatler");
   revalidatePath("/randevu");
   return { ok: true };
 }

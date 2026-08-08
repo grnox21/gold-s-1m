@@ -11,7 +11,7 @@ project locally.
 1. Create the project at supabase.com (or self-host).
 2. SQL Editor → run each file in `migrations/` in order (0001 → 0008).
 3. Run `seed.sql` for placeholder barbers/services/hours you can edit from
-   `/admin` afterwards.
+   `/giris` afterwards.
 4. Enable the **pg_cron** extension if you want reminders driven from
    Postgres instead of (or in addition to) the Vercel Cron job already
    wired up at `/api/cron/reminders` — see that route's comments.

@@ -1,4 +1,4 @@
--- Placeholder seed data, editable from /admin afterwards.
+-- Placeholder seed data, editable from /giris afterwards.
 -- Run via `supabase db reset` (local) or paste into the SQL editor once on
 -- a fresh project.
 

@@ -35,7 +35,7 @@ export async function saveWorkingHours(barberId: string, rows: WorkingHourRow[])
   );
 
   if (error) return { ok: false, error: "Çalışma saatleri kaydedilemedi." };
-  revalidatePath("/admin/calisma-saatleri");
+  revalidatePath("/giris/calisma-saatleri");
   revalidatePath("/randevu");
   return { ok: true };
 }

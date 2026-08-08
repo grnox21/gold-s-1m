@@ -39,7 +39,7 @@ function endOfMonth(dateStr: string): string {
   return `${dateStr.slice(0, 7)}-${String(last).padStart(2, "0")}`;
 }
 
-export default async function AdminCalendarPage({ searchParams }: PageProps<"/admin/takvim">) {
+export default async function AdminCalendarPage({ searchParams }: PageProps<"/giris/takvim">) {
   const { admin } = await requireAdmin();
   const isBarber = admin.role === "barber";
 
@@ -60,7 +60,7 @@ export default async function AdminCalendarPage({ searchParams }: PageProps<"/ad
   const prevDate = view === "day" ? addDays(date, -1) : view === "week" ? addDays(date, -7) : addDays(startOfMonth(date), -1);
   const nextDate = view === "day" ? addDays(date, 1) : view === "week" ? addDays(date, 7) : addDays(endOfMonth(date), 1);
 
-  const viewHref = (v: View, d: string) => `/admin/takvim?view=${v}&date=${d}`;
+  const viewHref = (v: View, d: string) => `/giris/takvim?view=${v}&date=${d}`;
 
   return (
     <div>
@@ -210,7 +210,7 @@ function MonthGrid({ date, appointments }: { date: string; appointments: Appoint
           return (
             <Link
               key={day}
-              href={`/admin/takvim?view=day&date=${day}`}
+              href={`/giris/takvim?view=day&date=${day}`}
               className={cn(
                 "flex aspect-square flex-col items-center justify-center gap-1 rounded-sm border transition-colors",
                 day === todayIstanbul() ? "border-gold/60" : "border-border hover:border-border-strong"

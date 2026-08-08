@@ -8,9 +8,9 @@ export const metadata: Metadata = {
 
 export default async function AdminLoginPage({
   searchParams,
-}: PageProps<"/admin/login">) {
+}: PageProps<"/giris/login">) {
   const params = await searchParams;
-  const nextPath = typeof params.next === "string" ? params.next : "/admin";
+  const nextPath = typeof params.next === "string" ? params.next : "/giris";
   const unauthorized = params.error === "yetkisiz";
 
   return (

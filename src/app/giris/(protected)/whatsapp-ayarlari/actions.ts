@@ -25,7 +25,7 @@ export async function saveWhatsappSettings(input: unknown): Promise<ActionResult
     .eq("id", 1);
 
   if (error) return { ok: false, error: "Ayarlar kaydedilemedi." };
-  revalidatePath("/admin/whatsapp-ayarlari");
+  revalidatePath("/giris/whatsapp-ayarlari");
   return { ok: true };
 }
 

@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { todayIstanbul } from "@/lib/booking/time";
-import { adminCreateAppointment } from "@/app/admin/(protected)/randevular/actions";
+import { adminCreateAppointment } from "@/app/giris/(protected)/randevular/actions";
 import type { Barber, Service } from "@/types/database";
 
 interface Slot {

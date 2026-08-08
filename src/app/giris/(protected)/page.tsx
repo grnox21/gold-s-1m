@@ -50,7 +50,7 @@ export default async function AdminDashboardPage() {
         <Card>
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle>Bugünün Randevuları</CardTitle>
-            <Link href="/admin/randevular" className="label-caps text-[0.62rem] text-gold hover:underline">
+            <Link href="/giris/randevular" className="label-caps text-[0.62rem] text-gold hover:underline">
               Tümünü Gör
             </Link>
           </CardHeader>

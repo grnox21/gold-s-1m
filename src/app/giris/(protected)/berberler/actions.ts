@@ -27,7 +27,7 @@ export async function createBarber(input: unknown): Promise<ActionResult> {
   });
 
   if (error) return { ok: false, error: error.message.includes("duplicate") ? "Bu slug zaten kullanılıyor." : "Berber eklenemedi." };
-  revalidatePath("/admin/berberler");
+  revalidatePath("/giris/berberler");
   revalidatePath("/berberler");
   revalidatePath("/randevu");
   return { ok: true };
@@ -53,7 +53,7 @@ export async function updateBarber(id: string, input: unknown): Promise<ActionRe
     .eq("id", id);
 
   if (error) return { ok: false, error: "Berber güncellenemedi." };
-  revalidatePath("/admin/berberler");
+  revalidatePath("/giris/berberler");
   revalidatePath("/berberler");
   revalidatePath("/randevu");
   return { ok: true };
@@ -64,7 +64,7 @@ export async function deleteBarber(id: string): Promise<ActionResult> {
   const supabase = createServiceClient();
   const { error } = await supabase.from("barbers").delete().eq("id", id);
   if (error) return { ok: false, error: "Berber silinemedi. Randevu geçmişi olan berberleri pasif yapmanız önerilir." };
-  revalidatePath("/admin/berberler");
+  revalidatePath("/giris/berberler");
   revalidatePath("/berberler");
   return { ok: true };
 }

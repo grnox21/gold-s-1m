@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { blockedTimeSchema, type BlockedTimeFormValues } from "@/lib/validations/admin";
 import type { Barber } from "@/types/database";
-import { createBlockedTime } from "@/app/admin/(protected)/engellenen-saatler/actions";
+import { createBlockedTime } from "@/app/giris/(protected)/engellenen-saatler/actions";
 
 export function BlockedTimeFormDialog({ barbers, trigger }: { barbers: Barber[]; trigger: React.ReactNode }) {
   const [open, setOpen] = useState(false);

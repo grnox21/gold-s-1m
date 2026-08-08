@@ -3,7 +3,7 @@
 --   is a Server Component or Route Handler using a service-role client, and
 --   every booking write goes through server-side validation first. Browsers
 --   only ever hold the anon key (used solely for Supabase Auth on
---   /admin/login), so RLS here is a deny-by-default backstop: nothing is
+--   /giris/login), so RLS here is a deny-by-default backstop: nothing is
 --   reachable with the anon key except the two "read active" policies below,
 --   which just mirror content that's already public on the marketing site.
 --   Authenticated admin access is gated through is_admin() (0002_helpers.sql).

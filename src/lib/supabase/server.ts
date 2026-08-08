@@ -7,7 +7,7 @@ import { env } from "@/lib/env";
 /**
  * Anon-key client bound to the request's cookies. Used ONLY to answer "who
  * is logged in" (Supabase Auth) in Server Components, Server Actions and
- * Route Handlers under /admin — never for reading or writing app data
+ * Route Handlers under /giris — never for reading or writing app data
  * (that's always createServiceClient()).
  */
 export async function createSupabaseServerClient() {

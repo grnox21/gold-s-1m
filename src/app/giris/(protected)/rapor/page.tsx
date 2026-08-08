@@ -45,7 +45,7 @@ function yearRange(dateStr: string): { start: string; end: string } {
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-export default async function AdminReportPage({ searchParams }: PageProps<"/admin/rapor">) {
+export default async function AdminReportPage({ searchParams }: PageProps<"/giris/rapor">) {
   await requireFullAdmin();
   const params = await searchParams;
   const today = todayIstanbul();
@@ -69,7 +69,7 @@ export default async function AdminReportPage({ searchParams }: PageProps<"/admi
 
   const report = await getBarberReport(start, end);
 
-  const rangeHref = (r: RangeKey) => `/admin/rapor?range=${r}`;
+  const rangeHref = (r: RangeKey) => `/giris/rapor?range=${r}`;
   const dtLabel = new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "long", year: "numeric" });
 
   return (
@@ -95,7 +95,7 @@ export default async function AdminReportPage({ searchParams }: PageProps<"/admi
       </div>
 
       {range === "custom" && (
-        <form className="mb-6 flex flex-wrap items-end gap-3" action="/admin/rapor">
+        <form className="mb-6 flex flex-wrap items-end gap-3" action="/giris/rapor">
           <input type="hidden" name="range" value="custom" />
           <label className="flex flex-col gap-1.5">
             <span className="label-caps text-[0.6rem] text-ash">Başlangıç</span>

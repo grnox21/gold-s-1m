@@ -20,14 +20,14 @@ npm run dev
 
 1. [supabase.com](https://supabase.com) üzerinde bir proje oluşturun (veya self-host edin).
 2. **SQL Editor** → `supabase/migrations/` altındaki dosyaları **sırayla** (0001 → 0009) çalıştırın.
-3. `supabase/seed.sql` dosyasını çalıştırın — 3 yer tutucu berber, 8 hizmet ve çalışma saatleri ekler; hepsi `/admin` üzerinden düzenlenebilir.
+3. `supabase/seed.sql` dosyasını çalıştırın — 3 yer tutucu berber, 8 hizmet ve çalışma saatleri ekler; hepsi `/giris` üzerinden düzenlenebilir.
 4. Project Settings → API'den `URL`, `anon key` ve `service_role key` değerlerini alıp `.env.local`'e yazın.
 5. İlk admin hesabınızı oluşturun (işletme sahibi/genel yönetici — tüm berberlerin tüm randevularını görür): Authentication → Users'dan bir kullanıcı ekleyin, sonra SQL Editor'de:
    ```sql
    insert into admin_users (auth_user_id, full_name, role)
    values ('<auth kullanıcısının UUID''si>', 'Adınız', 'owner');
    ```
-5b. **Her berbere kendi randevularını görebileceği ayrı bir giriş** vermek isterseniz (sadece o berberin randevuları — `/admin`'in geri kalanı görünmez), bunu artık panelden yapabilirsiniz: `owner`/`admin` hesabıyla giriş yapıp **Berberler** sayfasına gidin, ilgili berberin satırındaki **"Giriş Hesabı Oluştur"** butonuna tıklayıp e-posta/şifre girin — Supabase Auth kullanıcısını oluşturmak ve `admin_users`'a `role: 'barber'` olarak bağlamak tek adımda olur. (Aynı satırdaki çöp kutusu ikonu hesabı kaldırır.)
+5b. **Her berbere kendi randevularını görebileceği ayrı bir giriş** vermek isterseniz (sadece o berberin randevuları — `/giris`'in geri kalanı görünmez), bunu artık panelden yapabilirsiniz: `owner`/`admin` hesabıyla giriş yapıp **Berberler** sayfasına gidin, ilgili berberin satırındaki **"Giriş Hesabı Oluştur"** butonuna tıklayıp e-posta/şifre girin — Supabase Auth kullanıcısını oluşturmak ve `admin_users`'a `role: 'barber'` olarak bağlamak tek adımda olur. (Aynı satırdaki çöp kutusu ikonu hesabı kaldırır.)
 
    Panelsiz, doğrudan SQL ile yapmak isterseniz alternatif:
    ```sql
@@ -71,7 +71,7 @@ npm run build
 
 ```
 src/app/(site)/       Genel site sayfaları
-src/app/admin/         Admin paneli (login dışında requireAdmin() ile korumalı)
+src/app/giris/         Admin paneli (login dışında requireAdmin() ile korumalı)
 src/app/api/           Randevu, müsaitlik ve cron uç noktaları
 src/lib/booking/       Müsaitlik motoru, randevu motoru, telefon/tarih yardımcıları
 src/lib/whatsapp/       Sağlayıcıdan bağımsız WhatsApp bildirim katmanı

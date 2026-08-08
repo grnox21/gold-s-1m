@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Çalışma Saatleri" };
 
 export default async function AdminWorkingHoursPage({
   searchParams,
-}: PageProps<"/admin/calisma-saatleri">) {
+}: PageProps<"/giris/calisma-saatleri">) {
   await requireFullAdmin();
   const params = await searchParams;
   const supabase = createServiceClient();
@@ -35,7 +35,7 @@ export default async function AdminWorkingHoursPage({
         {barbers.map((barber) => (
           <Link
             key={barber.id}
-            href={`/admin/calisma-saatleri?barber=${barber.id}`}
+            href={`/giris/calisma-saatleri?barber=${barber.id}`}
             className={cn(
               "label-caps rounded-full border px-4 py-2 text-[0.64rem] transition-colors",
               barber.id === selectedBarberId

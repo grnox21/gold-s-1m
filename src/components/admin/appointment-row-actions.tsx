@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { RescheduleDialog } from "./reschedule-dialog";
-import { adminCancelAppointment, adminMarkCompleted, adminMarkNoShow } from "@/app/admin/(protected)/randevular/actions";
+import { adminCancelAppointment, adminMarkCompleted, adminMarkNoShow } from "@/app/giris/(protected)/randevular/actions";
 import type { Appointment, Barber } from "@/types/database";
 
 export function AppointmentRowActions({ appointment, barbers }: { appointment: Appointment; barbers: Barber[] }) {

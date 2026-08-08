@@ -35,7 +35,7 @@ const dtFormat = new Intl.DateTimeFormat("tr-TR", {
 
 export default async function AdminAppointmentsPage({
   searchParams,
-}: PageProps<"/admin/randevular">) {
+}: PageProps<"/giris/randevular">) {
   const { admin } = await requireAdmin();
   const isBarber = admin.role === "barber";
 
@@ -69,7 +69,7 @@ export default async function AdminAppointmentsPage({
     const sp = new URLSearchParams();
     sp.set("status", next.status ?? statusFilter);
     sp.set("barber", next.barber ?? barberFilter);
-    return `/admin/randevular?${sp.toString()}`;
+    return `/giris/randevular?${sp.toString()}`;
   };
 
   return (

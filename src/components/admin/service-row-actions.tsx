@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { ServiceFormDialog } from "./service-form-dialog";
-import { deleteService } from "@/app/admin/(protected)/hizmetler/actions";
+import { deleteService } from "@/app/giris/(protected)/hizmetler/actions";
 import type { Service } from "@/types/database";
 
 export function ServiceRowActions({ service }: { service: Service }) {

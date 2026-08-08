@@ -18,7 +18,7 @@ export async function saveSiteSettings(input: unknown): Promise<ActionResult> {
   const { error } = await supabase.from("site_settings").upsert(rows, { onConflict: "key" });
   if (error) return { ok: false, error: "Ayarlar kaydedilemedi." };
 
-  revalidatePath("/admin/site-ayarlari");
+  revalidatePath("/giris/site-ayarlari");
   revalidatePath("/");
   revalidatePath("/iletisim");
   return { ok: true };

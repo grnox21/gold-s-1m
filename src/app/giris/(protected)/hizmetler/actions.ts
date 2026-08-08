@@ -25,7 +25,7 @@ export async function createService(input: unknown): Promise<ActionResult> {
   });
 
   if (error) return { ok: false, error: "Hizmet eklenemedi." };
-  revalidatePath("/admin/hizmetler");
+  revalidatePath("/giris/hizmetler");
   revalidatePath("/hizmetler");
   revalidatePath("/randevu");
   return { ok: true };
@@ -49,7 +49,7 @@ export async function updateService(id: string, input: unknown): Promise<ActionR
     .eq("id", id);
 
   if (error) return { ok: false, error: "Hizmet güncellenemedi." };
-  revalidatePath("/admin/hizmetler");
+  revalidatePath("/giris/hizmetler");
   revalidatePath("/hizmetler");
   revalidatePath("/randevu");
   return { ok: true };
@@ -60,7 +60,7 @@ export async function deleteService(id: string): Promise<ActionResult> {
   const supabase = createServiceClient();
   const { error } = await supabase.from("services").delete().eq("id", id);
   if (error) return { ok: false, error: "Hizmet silinemedi. Geçmiş randevularda kullanılan hizmetleri pasif yapmanız önerilir." };
-  revalidatePath("/admin/hizmetler");
+  revalidatePath("/giris/hizmetler");
   revalidatePath("/hizmetler");
   return { ok: true };
 }

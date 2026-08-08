@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { dateStringFromInstant } from "@/lib/booking/time";
-import { adminRescheduleAppointment } from "@/app/admin/(protected)/randevular/actions";
+import { adminRescheduleAppointment } from "@/app/giris/(protected)/randevular/actions";
 import type { Appointment, Barber } from "@/types/database";
 
 interface Slot {

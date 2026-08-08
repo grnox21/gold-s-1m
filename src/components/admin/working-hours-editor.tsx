@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import type { WorkingHour } from "@/types/database";
-import { saveWorkingHours, type WorkingHourRow } from "@/app/admin/(protected)/calisma-saatleri/actions";
+import { saveWorkingHours, type WorkingHourRow } from "@/app/giris/(protected)/calisma-saatleri/actions";
 
 const WEEKDAY_LABELS = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
 

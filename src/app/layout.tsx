@@ -20,7 +20,7 @@ const manrope = Manrope({
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://yusufdemir.com.tr"
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://yusufdemir.com"
   ),
   title: {
     default: "Yusuf Demir Erkek Kuaförü | Premium Erkek Kuaförü",

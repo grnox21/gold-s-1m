@@ -46,7 +46,7 @@ export async function createBarberLogin(barberId: string, barberName: string, in
     return { ok: false, error: "Hesap oluşturuldu ama berbere bağlanamadı. Tekrar deneyin." };
   }
 
-  revalidatePath("/admin/berberler");
+  revalidatePath("/giris/berberler");
   return { ok: true };
 }
 
@@ -60,6 +60,6 @@ export async function deleteBarberLogin(authUserId: string): Promise<ActionResul
   const supabase = createServiceClient();
   const { error } = await supabase.auth.admin.deleteUser(authUserId);
   if (error) return { ok: false, error: "Hesap silinemedi." };
-  revalidatePath("/admin/berberler");
+  revalidatePath("/giris/berberler");
   return { ok: true };
 }
