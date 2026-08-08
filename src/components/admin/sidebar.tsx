@@ -13,6 +13,7 @@ import {
   Ban,
   MessageCircle,
   Settings,
+  BarChart3,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true, fullAdminOnly: false },
   { href: "/admin/randevular", label: "Randevular", icon: CalendarRange, fullAdminOnly: false },
   { href: "/admin/takvim", label: "Takvim", icon: CalendarDays, fullAdminOnly: false },
+  { href: "/admin/rapor", label: "Berber Raporu", icon: BarChart3, fullAdminOnly: true },
   { href: "/admin/berberler", label: "Berberler", icon: UserCircle, fullAdminOnly: true },
   { href: "/admin/hizmetler", label: "Hizmetler", icon: Scissors, fullAdminOnly: true },
   { href: "/admin/musteriler", label: "Müşteriler", icon: Users, fullAdminOnly: true },
