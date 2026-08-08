@@ -83,6 +83,7 @@ export async function POST(request: Request) {
           error: err.message,
           alternatives: alternatives.map((s) => ({
             startAt: s.startAt.toISOString(),
+            endAt: s.endAt.toISOString(),
             label: formatIstanbulTime(s.startAt),
           })),
         },

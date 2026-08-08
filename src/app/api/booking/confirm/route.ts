@@ -58,6 +58,7 @@ export async function POST(request: Request) {
             "Randevu için ayrılan süre doldu ve bu saat serbest bırakıldı. Lütfen başka bir saat seçin.",
           alternatives: alternatives.map((s) => ({
             startAt: s.startAt.toISOString(),
+            endAt: s.endAt.toISOString(),
             label: formatIstanbulTime(s.startAt),
           })),
         },

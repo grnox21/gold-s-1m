@@ -1,9 +1,12 @@
 import { z } from "zod";
 
-// Accepts +905xxxxxxxxx, 05xxxxxxxxx, or 5xxxxxxxxx — anything that
-// normalizes to a plausible Turkish mobile number once non-digits are
-// stripped. Actual E.164 normalization happens in lib/booking/phone.ts.
+// Accepts +905xxxxxxxxx, 05xxxxxxxxx, or 5xxxxxxxxx, with optional spaces
+// or dashes between groups (customers type "0532 111 22 33", not a bare
+// digit string) — anything that normalizes to a plausible Turkish mobile
+// number once separators are stripped. Actual E.164 normalization for
+// storage happens in lib/booking/phone.ts.
 const phoneRegex = /^(\+?90|0)?5\d{9}$/;
+const isValidTurkishPhone = (value: string) => phoneRegex.test(value.replace(/[\s-]/g, ""));
 
 export const bookingDetailsSchema = z.object({
   customerName: z
@@ -14,7 +17,7 @@ export const bookingDetailsSchema = z.object({
   customerPhone: z
     .string()
     .trim()
-    .regex(phoneRegex, "Geçerli bir telefon numarası girin (örn. 0532 111 22 33)."),
+    .refine(isValidTurkishPhone, "Geçerli bir telefon numarası girin (örn. 0532 111 22 33)."),
   customerEmail: z
     .string()
     .trim()
