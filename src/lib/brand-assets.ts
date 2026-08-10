@@ -3,16 +3,17 @@ import fs from "node:fs";
 import path from "node:path";
 
 /**
- * The real Yusuf Demir logo and shop interior photos were shared in chat as
- * inline images, not as files this environment can write to disk — there is
- * no tool available here that extracts message-embedded image bytes onto
- * the filesystem. Rather than fabricate a lookalike of a real client's mark
- * (or fill the gallery with stock photography the brief explicitly rules
- * out), the site ships with a typographic wordmark lockup and an empty
- * gallery, and upgrades itself automatically the moment the real files are
+ * The site ships with a typographic wordmark lockup as a safe default and
+ * upgrades itself automatically the moment the real brand files are
  * dropped in — no code changes needed:
  *
- *   public/brand/logo.png      — transparent gold logo, for dark sections
+ *   public/brand/logo.png      — full circular badge, transparent gold,
+ *                                 for dark sections (Nav, Footer, apple
+ *                                 touch icon, Open Graph image)
+ *   public/brand/logo-mark.png — tight crop of just the "YD" monogram,
+ *                                 no ring/crown/tools text — the only
+ *                                 thing that stays legible at 16-32px, so
+ *                                 this is what the browser-tab favicon uses
  *   public/brand/logo-dark.png — optional, only if a light-ground variant
  *                                 is ever needed
  *   public/gallery/*.jpg|png   — shop interior photos, any filenames
@@ -32,8 +33,23 @@ export function hasLogoImage(): boolean {
   return fileExists("brand/logo.png");
 }
 
+export function hasLogoMarkImage(): boolean {
+  return fileExists("brand/logo-mark.png");
+}
+
 export function hasLogoDarkImage(): boolean {
   return fileExists("brand/logo-dark.png");
+}
+
+/** Reads a public/ asset and returns it as a `data:` URI, or null if it
+ * doesn't exist yet. Satori (what next/og's ImageResponse renders with)
+ * can't fetch relative `/brand/...` URLs, so the icon/apple-icon/opengraph
+ * routes need the bytes inlined like this instead of a plain <img src>. */
+export function logoDataUri(variant: "logo" | "logo-mark" = "logo"): string | null {
+  const relPath = `brand/${variant}.png`;
+  if (!fileExists(relPath)) return null;
+  const bytes = fs.readFileSync(path.join(process.cwd(), "public", relPath));
+  return `data:image/png;base64,${bytes.toString("base64")}`;
 }
 
 export function listGalleryImages(): string[] {
