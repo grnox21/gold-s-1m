@@ -57,6 +57,8 @@ export const whatsappSettingsSchema = z.object({
   phoneNumberId: z.string().trim().optional().or(z.literal("")),
   businessNumber: z.string().trim().optional().or(z.literal("")),
   isEnabled: z.boolean(),
+  sendCustomerConfirmation: z.boolean(),
+  sendCustomerReminder: z.boolean(),
 });
 export type WhatsappSettingsFormValues = z.infer<typeof whatsappSettingsSchema>;
 

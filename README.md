@@ -57,6 +57,13 @@ Sohbette paylaşılan logo ve mekân fotoğrafı bu ortamda diske kaydedilemedi 
 
 Gerçek API kimlik bilgileri olmadan sistem otomatik olarak **click-to-chat** (wa.me linki) moduna düşer — randevu akışı hiçbir zaman bu yüzden bozulmaz. Meta Cloud API veya Twilio'ya geçmek için `.env.example`'daki `WHATSAPP_*` değişkenlerini doldurup admin panelinden (WhatsApp Ayarları) sağlayıcıyı seçmeniz yeterli.
 
+**WhatsApp Ayarları** sayfasındaki üç anahtar:
+- **Otomatik bildirimler etkin** — hepsinin ana kapatma/açma anahtarı (berbere ve müşteriye giden her mesaj).
+- **Randevu onayı** — müşteriye randevu oluşur oluşmaz gidecek onay mesajı.
+- **30 dakika kala hatırlatma** — müşteriye randevudan 30 dakika önce gidecek hatırlatma.
+
+Son iki anahtar yalnızca müşteriye giden mesajları etkiler; berbere giden randevu bildirimi ve hatırlatma her zaman gönderilir (ana anahtar açıkken). Biri kapalıyken gelen bir randevu/hatırlatma sessizce atlanır ve anahtar tekrar açıldığında (aynı 30dk penceresi/1 saatlik onay-tekrar-deneme penceresi içindeyse) otomatik olarak gönderilir — bir şey kaybolmaz.
+
 ## Test
 
 ```bash

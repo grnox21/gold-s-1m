@@ -21,6 +21,8 @@ export async function saveWhatsappSettings(input: unknown): Promise<ActionResult
       phone_number_id: parsed.data.phoneNumberId || null,
       business_number: parsed.data.businessNumber || null,
       is_enabled: parsed.data.isEnabled,
+      send_customer_confirmation: parsed.data.sendCustomerConfirmation,
+      send_customer_reminder: parsed.data.sendCustomerReminder,
     })
     .eq("id", 1);
 

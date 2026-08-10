@@ -129,6 +129,8 @@ export interface WhatsAppSettings {
   phone_number_id: string | null;
   business_number: string | null;
   is_enabled: boolean;
+  send_customer_confirmation: boolean;
+  send_customer_reminder: boolean;
   updated_at: string;
 }
 

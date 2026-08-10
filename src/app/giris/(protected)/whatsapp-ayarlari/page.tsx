@@ -19,6 +19,8 @@ export default async function AdminWhatsappSettingsPage() {
     phone_number_id: null,
     business_number: null,
     is_enabled: false,
+    send_customer_confirmation: true,
+    send_customer_reminder: true,
     updated_at: new Date().toISOString(),
   };
 

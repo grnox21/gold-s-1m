@@ -37,6 +37,8 @@ export function WhatsappSettingsForm({ settings }: { settings: WhatsAppSettings 
       phoneNumberId: settings.phone_number_id ?? "",
       businessNumber: settings.business_number ?? "",
       isEnabled: settings.is_enabled,
+      sendCustomerConfirmation: settings.send_customer_confirmation,
+      sendCustomerReminder: settings.send_customer_reminder,
     },
   });
 
@@ -121,6 +123,41 @@ export function WhatsappSettingsForm({ settings }: { settings: WhatsAppSettings 
                 name="isEnabled"
                 render={({ field }) => <Switch id="isEnabled" checked={field.value} onCheckedChange={field.onChange} />}
               />
+            </div>
+
+            <div className="space-y-3 rounded-sm border border-border-strong px-4 py-3">
+              <p className="label-caps text-[0.62rem] text-ash">Müşteriye Gönderilenler</p>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="sendCustomerConfirmation" className="text-foreground normal-case tracking-normal text-sm">
+                  Randevu onayı
+                </Label>
+                <Controller
+                  control={control}
+                  name="sendCustomerConfirmation"
+                  render={({ field }) => (
+                    <Switch id="sendCustomerConfirmation" checked={field.value} onCheckedChange={field.onChange} />
+                  )}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="sendCustomerReminder" className="text-foreground normal-case tracking-normal text-sm">
+                  30 dakika kala hatırlatma
+                </Label>
+                <Controller
+                  control={control}
+                  name="sendCustomerReminder"
+                  render={({ field }) => (
+                    <Switch id="sendCustomerReminder" checked={field.value} onCheckedChange={field.onChange} />
+                  )}
+                />
+              </div>
+
+              <p className="text-xs text-ash">
+                Berbere giden randevu ve hatırlatma bildirimlerini etkilemez — bu ikisi yalnızca müşteriye giden mesajları
+                açar/kapatır.
+              </p>
             </div>
 
             <Button type="submit" disabled={isSubmitting}>

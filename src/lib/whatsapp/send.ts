@@ -91,7 +91,7 @@ async function logNotification(
 }
 
 export interface NotifyResult {
-  status: "sent" | "failed" | "skipped" | "already_sent" | "not_applicable";
+  status: "sent" | "failed" | "skipped" | "already_sent" | "not_applicable" | "disabled";
   waLink?: string;
 }
 
@@ -105,6 +105,25 @@ export async function notifyAppointment(
   appointmentId: string,
   kind: NotificationKind
 ): Promise<NotifyResult> {
+  const { data: settingsData } = await supabase.from("whatsapp_settings").select("*").eq("id", 1).maybeSingle();
+  const settings =
+    (settingsData as WhatsAppSettings | null) ??
+    ({
+      provider: "click_to_chat",
+      phone_number_id: null,
+      is_enabled: true,
+      send_customer_confirmation: true,
+      send_customer_reminder: true,
+    } as Pick<WhatsAppSettings, "provider" | "phone_number_id" | "is_enabled" | "send_customer_confirmation" | "send_customer_reminder">);
+
+  // Gated off before the dedupe slot is ever claimed, so flipping the
+  // setting back on later still lets the cron's reminder scan / booking
+  // confirmation retry pick the appointment back up instead of having
+  // silently burned its one shot while the toggle was off.
+  if (!settings.is_enabled) return { status: "disabled" };
+  if (kind === "booking_customer" && !settings.send_customer_confirmation) return { status: "disabled" };
+  if (kind === "reminder_customer" && !settings.send_customer_reminder) return { status: "disabled" };
+
   const dedupeColumn = DEDUPE_COLUMN[kind];
   if (dedupeColumn) {
     const claimed = await claimSlot(supabase, appointmentId, dedupeColumn);
@@ -142,9 +161,6 @@ export async function notifyAppointment(
       text = cancellationToCustomer(ctx);
       break;
   }
-
-  const { data: settingsData } = await supabase.from("whatsapp_settings").select("*").eq("id", 1).maybeSingle();
-  const settings = (settingsData as WhatsAppSettings | null) ?? { provider: "click_to_chat", phone_number_id: null };
 
   const provider = createWhatsAppProvider(settings);
   const result = await provider.sendMessage(recipientNumber, text);
