@@ -3,7 +3,7 @@ import { MapPin, MessageCircle, Phone } from "lucide-react";
 
 import { Logo } from "./logo";
 import { InstagramIcon } from "./icons";
-import { hasLogoImage } from "@/lib/brand-assets";
+import { navLogoSrc } from "@/lib/brand-assets";
 import { getActiveBarbers, getActiveServices, getSiteSettings } from "@/lib/site-data";
 import { waLink } from "@/lib/booking/phone";
 
@@ -13,14 +13,14 @@ export async function Footer() {
     getActiveServices(),
     getSiteSettings(),
   ]);
-  const hasLogo = hasLogoImage();
+  const logoSrc = navLogoSrc();
 
   return (
     <footer className="border-t border-border bg-ink">
       <div className="mx-auto max-w-7xl px-6 py-16 lg:px-12 lg:py-24">
         <div className="grid gap-12 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
           <div>
-            <Logo hasImage={hasLogo} />
+            <Logo src={logoSrc} />
             <p className="mt-6 max-w-xs text-sm leading-relaxed text-ash">
               Premium erkek kuaförü deneyimi — klasik zanaat, modern konfor. Randevunuzu online oluşturun,
               berberinizi siz seçin.

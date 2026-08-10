@@ -41,6 +41,17 @@ export function hasLogoDarkImage(): boolean {
   return fileExists("brand/logo-dark.png");
 }
 
+/** Nav/Footer render the logo at a fixed 48px height — enough to resolve
+ * the "YD" monogram, not enough to keep the full lockup's "YUSUF DEMİR /
+ * ERKEK KUAFÖRÜ" line legible (same problem the 16-32px favicon has, just
+ * less extreme). Prefer the monogram there; fall back to the full lockup
+ * only if that crop hasn't been added yet, then to the typographic mark. */
+export function navLogoSrc(): string | null {
+  if (hasLogoMarkImage()) return "/brand/logo-mark.png";
+  if (hasLogoImage()) return "/brand/logo.png";
+  return null;
+}
+
 /** Reads a public/ asset and returns it as a `data:` URI, or null if it
  * doesn't exist yet. Satori (what next/og's ImageResponse renders with)
  * can't fetch relative `/brand/...` URLs, so the icon/apple-icon/opengraph

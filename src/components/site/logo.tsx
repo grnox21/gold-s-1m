@@ -5,22 +5,22 @@ import { cn } from "@/lib/utils";
 
 /** Renders the real logo file if one has been dropped into public/brand,
  * otherwise a typographic lockup in the same brand voice — see
- * lib/brand-assets.ts for why. `hasImage` is resolved once, server-side,
- * by the caller (Nav/Footer) so this component itself can stay usable from
- * both Server and Client Components. */
+ * lib/brand-assets.ts for why. `src` is resolved once, server-side, by the
+ * caller (Nav/Footer, via navLogoSrc()) so this component itself can stay
+ * usable from both Server and Client Components. */
 export function Logo({
-  hasImage,
+  src,
   className,
   markClassName,
 }: {
-  hasImage: boolean;
+  src: string | null;
   className?: string;
   markClassName?: string;
 }) {
-  if (hasImage) {
+  if (src) {
     return (
       <Link href="/" className={cn("relative block h-12 w-auto shrink-0", className)} aria-label="Yusuf Demir Erkek Kuaförü — Ana Sayfa">
-        <Image src="/brand/logo.png" alt="Yusuf Demir Erkek Kuaförü" width={160} height={160} className="h-full w-auto object-contain" priority />
+        <Image src={src} alt="Yusuf Demir Erkek Kuaförü" width={160} height={160} className="h-full w-auto object-contain" priority />
       </Link>
     );
   }

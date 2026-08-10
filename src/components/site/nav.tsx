@@ -19,7 +19,7 @@ const NAV_LINKS = [
   { href: "/iletisim", label: "İletişim" },
 ];
 
-export function Nav({ hasLogoImage }: { hasLogoImage: boolean }) {
+export function Nav({ logoSrc }: { logoSrc: string | null }) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
 
@@ -38,7 +38,7 @@ export function Nav({ hasLogoImage }: { hasLogoImage: boolean }) {
       )}
     >
       <div className={cn("mx-auto flex max-w-7xl items-center justify-between px-6 transition-all duration-500 lg:px-12", scrolled ? "py-3" : "py-6")}>
-        <Logo hasImage={hasLogoImage} />
+        <Logo src={logoSrc} />
 
         <nav className="hidden items-center gap-9 lg:flex">
           {NAV_LINKS.map((link) => {
@@ -77,7 +77,7 @@ export function Nav({ hasLogoImage }: { hasLogoImage: boolean }) {
           <SheetContent side="right" className="w-full max-w-none sm:max-w-sm">
             <SheetHeader>
               <SheetTitle>
-                <Logo hasImage={hasLogoImage} />
+                <Logo src={logoSrc} />
               </SheetTitle>
             </SheetHeader>
             <nav className="mt-8 flex flex-col gap-1">
