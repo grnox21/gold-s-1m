@@ -18,9 +18,20 @@ export function Logo({
   markClassName?: string;
 }) {
   if (src) {
+    // Name rendered as real text below the mark, not baked into the image —
+    // the source crop is small (the monogram, for legibility at nav/footer
+    // size; see navLogoSrc()), so text drawn into those pixels would be
+    // mud. Actual HTML text stays crisp at any size instead.
     return (
-      <Link href="/" className={cn("relative block h-12 w-auto shrink-0", className)} aria-label="Yusuf Demir Erkek Kuaförü — Ana Sayfa">
-        <Image src={src} alt="Yusuf Demir Erkek Kuaförü" width={160} height={160} className="h-full w-auto object-contain" priority />
+      <Link
+        href="/"
+        className={cn("group flex shrink-0 flex-col items-start gap-1", className)}
+        aria-label="Yusuf Demir Erkek Kuaförü — Ana Sayfa"
+      >
+        <Image src={src} alt="" width={160} height={160} className="h-9 w-auto object-contain sm:h-10" priority />
+        <span className={cn("font-display text-xs tracking-[0.05em] text-warm-white sm:text-sm", markClassName)}>
+          Yusuf <span className="text-gold">Demir</span>
+        </span>
       </Link>
     );
   }

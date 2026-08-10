@@ -38,7 +38,15 @@ export function Nav({ logoSrc }: { logoSrc: string | null }) {
       )}
     >
       <div className={cn("mx-auto flex max-w-7xl items-center justify-between px-6 transition-all duration-500 lg:px-12", scrolled ? "py-3" : "py-6")}>
-        <Logo src={logoSrc} />
+        {/* Balances the hamburger button's width below lg so justify-between
+            centers the logo exactly instead of leaving it flush left —
+            equal-width edge items is what makes a 3-item space-between row
+            center the middle one. Collapses to nothing at lg, where the
+            logo goes back to sitting at the actual left edge next to the
+            nav links. */}
+        <div className="size-10 lg:hidden" aria-hidden="true" />
+
+        <Logo src={logoSrc} className="items-center lg:items-start" />
 
         <nav className="hidden items-center gap-9 lg:flex">
           {NAV_LINKS.map((link) => {
