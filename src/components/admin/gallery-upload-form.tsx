@@ -5,11 +5,22 @@ import { Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { uploadGalleryImage } from "@/app/giris/(protected)/gorseller/actions";
+
+const PLACEMENT_OPTIONS = [
+  { key: "showHome", label: "Ana Sayfa" },
+  { key: "showGallery", label: "Galeri" },
+  { key: "showAbout", label: "Hakkımızda" },
+] as const;
 
 export function GalleryUploadForm() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  // Default: new photos show everywhere, same as before per-image
+  // placement existed — narrowing it down afterwards is a click away on
+  // each card, not something every upload has to think about.
+  const [placements, setPlacements] = useState({ showHome: true, showGallery: true, showAbout: true });
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -22,6 +33,10 @@ export function GalleryUploadForm() {
     for (const file of Array.from(files)) {
       const formData = new FormData();
       formData.set("file", file);
+      if (placements.showHome) formData.set("showHome", "on");
+      if (placements.showGallery) formData.set("showGallery", "on");
+      if (placements.showAbout) formData.set("showAbout", "on");
+
       const result = await uploadGalleryImage(formData);
       if (result.ok) {
         succeeded++;
@@ -36,7 +51,19 @@ export function GalleryUploadForm() {
   }
 
   return (
-    <div>
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {PLACEMENT_OPTIONS.map((opt) => (
+          <label key={opt.key} className="flex items-center gap-2 text-xs text-ash">
+            <Checkbox
+              checked={placements[opt.key]}
+              onCheckedChange={(checked) => setPlacements((prev) => ({ ...prev, [opt.key]: checked === true }))}
+            />
+            {opt.label}
+          </label>
+        ))}
+      </div>
+
       <input
         ref={inputRef}
         type="file"

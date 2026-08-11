@@ -12,9 +12,16 @@ import type { ActionResult } from "@/lib/admin/types";
  * email/note (see 0005_appointments.sql), and 0011 changed the FK to
  * ON DELETE SET NULL for exactly this — so Randevular/Takvim still show
  * every past and future booking, just no longer linked to a customers row.
+ *
+ * Restricted to the owner role specifically, not any admin login — same
+ * "owner controls who can delete" boundary as gorseller's
+ * deleteGalleryImage(). Checked here, not just hidden in the UI.
  */
 export async function clearAllCustomers(): Promise<ActionResult> {
-  await requireFullAdmin();
+  const { admin } = await requireFullAdmin();
+  if (admin.role !== "owner") {
+    return { ok: false, error: "Müşteri kayıtlarını yalnızca işletme sahibi silebilir." };
+  }
 
   const supabase = createServiceClient();
   // Supabase's delete() refuses to run with no filter at all — this

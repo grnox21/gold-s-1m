@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HakkimizdaPage() {
-  const [photo] = await listGalleryImageUrls();
+  const [photo] = await listGalleryImageUrls("about");
 
   return (
     <>

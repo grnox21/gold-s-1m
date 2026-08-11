@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function GaleriPage() {
-  const images = await listGalleryImageUrls();
+  const images = await listGalleryImageUrls("gallery");
 
   return (
     <>

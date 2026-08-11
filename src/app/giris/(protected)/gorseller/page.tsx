@@ -10,21 +10,22 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Görseller" };
 
 export default async function AdminGalleryPage() {
-  await requireFullAdmin();
+  const { admin } = await requireFullAdmin();
   const images = await listGalleryImages();
+  const isOwner = admin.role === "owner";
 
   return (
     <div>
       <AdminPageHeading
         title="Görseller"
-        description="Salon fotoğrafları — Ana Sayfa, Galeri ve Hakkımızda sayfalarında otomatik olarak gösterilir."
+        description="Her görselin altındaki kutucuklarla hangi sayfada göründüğünü tek tek seçin — Ana Sayfa, Galeri, Hakkımızda."
         action={<GalleryUploadForm />}
       />
 
       {images.length > 0 ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {images.map((image) => (
-            <GalleryImageCard key={image.path} image={image} />
+            <GalleryImageCard key={image.id} image={image} canDelete={isOwner} />
           ))}
         </div>
       ) : (

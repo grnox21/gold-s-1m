@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { clearAllCustomers } from "@/app/giris/(protected)/musteriler/actions";
 
-export function ClearCustomersButton({ count }: { count: number }) {
+export function ClearCustomersButton({ count, isOwner }: { count: number; isOwner: boolean }) {
   const [open, setOpen] = useState(false);
   const [clearing, setClearing] = useState(false);
 
@@ -33,6 +33,9 @@ export function ClearCustomersButton({ count }: { count: number }) {
   }
 
   if (count === 0) return null;
+  // Delete is owner-only — the server action re-checks this too, this is
+  // just so a non-owner admin doesn't see a button that would just error.
+  if (!isOwner) return null;
 
   return (
     <>

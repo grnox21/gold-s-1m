@@ -9,9 +9,10 @@ project locally.
 ## Applying to a fresh Supabase project
 
 1. Create the project at supabase.com (or self-host).
-2. SQL Editor → run each file in `migrations/` in order (0001 → 0012). 0012
+2. SQL Editor → run each file in `migrations/` in order (0001 → 0013). 0012
    creates the public `gallery` Storage bucket the Görseller admin page
-   uploads to.
+   uploads to; 0013 adds the table tracking which pages each photo
+   appears on.
 3. Run `seed.sql` for placeholder barbers/services/hours you can edit from
    `/giris` afterwards.
 4. Enable the **pg_cron** extension if you want reminders driven from

@@ -146,3 +146,16 @@ export interface AdminUser {
 
 /** Shape returned by the create_appointment() RPC. */
 export type CreateAppointmentResult = Appointment;
+
+/** A photo uploaded from /giris/gorseller. `storage_path` is its object
+ * key in the 'gallery' Storage bucket; the show_* flags are per-page
+ * placement toggles (an image can be on any combination, including
+ * none). */
+export interface GalleryImageRow {
+  id: string;
+  storage_path: string;
+  show_home: boolean;
+  show_gallery: boolean;
+  show_about: boolean;
+  created_at: string;
+}

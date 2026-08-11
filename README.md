@@ -19,7 +19,7 @@ npm run dev
 ## Supabase Kurulumu
 
 1. [supabase.com](https://supabase.com) üzerinde bir proje oluşturun (veya self-host edin).
-2. **SQL Editor** → `supabase/migrations/` altındaki dosyaları **sırayla** (0001 → 0012) çalıştırın. 0012, Görseller sayfasının kullandığı `gallery` adında herkese-açık-okunabilir bir Storage bucket'ı oluşturur — ekstra bir şey yapmanız gerekmez.
+2. **SQL Editor** → `supabase/migrations/` altındaki dosyaları **sırayla** (0001 → 0013) çalıştırın. 0012, Görseller sayfasının kullandığı `gallery` adında herkese-açık-okunabilir bir Storage bucket'ı oluşturur; 0013 her görselin hangi sayfalarda göründüğünü tutan tabloyu ekler — ekstra bir şey yapmanız gerekmez.
 3. `supabase/seed.sql` dosyasını çalıştırın — 3 yer tutucu berber, 8 hizmet ve çalışma saatleri ekler; hepsi `/giris` üzerinden düzenlenebilir.
 4. Project Settings → API'den `URL`, `anon key` ve `service_role key` değerlerini alıp `.env.local`'e yazın.
 5. İlk admin hesabınızı oluşturun (işletme sahibi/genel yönetici — tüm berberlerin tüm randevularını görür): Authentication → Users'dan bir kullanıcı ekleyin, sonra SQL Editor'de:
@@ -48,7 +48,11 @@ Migration'lar hakkında detay için `supabase/README.md`'ye bakın — orada ger
 
 **Logo** dosya olarak elle eklenir (`public/brand/logo.png` + `logo-mark.png`) — eklendiği anda Nav, Footer, favicon, Apple ikonu ve Open Graph görseli **otomatik olarak** gerçek logoyu kullanır, kod değişikliği gerekmez. Detay için `public/brand/README.md`.
 
-**Salon fotoğrafları** ise dosya olarak eklenmez — `/giris/gorseller` sayfasından (owner/admin girişiyle) doğrudan yüklenir/silinir ve Supabase Storage'da saklanır. Yüklenen her görsel Ana Sayfa, Galeri ve Hakkımızda sayfalarında otomatik olarak görünür. (Sunucusuz barındırmada `public/` klasörüne çalışma zamanında yazılan dosyalar kalıcı olmaz, bu yüzden logo gibi dosya-bırak yöntemi burada işe yaramaz — bkz. `src/lib/gallery-storage.ts`.)
+**Salon fotoğrafları** ise dosya olarak eklenmez — `/giris/gorseller` sayfasından (owner/admin girişiyle) doğrudan yüklenir ve Supabase Storage'da saklanır. (Sunucusuz barındırmada `public/` klasörüne çalışma zamanında yazılan dosyalar kalıcı olmaz, bu yüzden logo gibi dosya-bırak yöntemi burada işe yaramaz — bkz. `src/lib/gallery-storage.ts`.)
+
+Her görselin altında üç kutucuk var — **Ana Sayfa / Galeri / Hakkımızda** — hangi sayfalarda görüneceğini tek tek siz seçersiniz (birden fazlası da işaretlenebilir, hiçbiri de). Yükleme sırasındaki varsayılan üçü de işaretli, istediğiniz zaman bir görselin kutucuklarını değiştirebilirsiniz.
+
+**Silme yalnızca `owner` rolündeki hesaba açık** — `admin` rolündeki bir giriş görsel yükleyebilir ama silemez (buton hiç görünmez, ve sunucu tarafında da ayrıca engellenir). Aynı kısıtlama **Müşteriler** sayfasındaki "Tüm Kayıtları Sil" butonu için de geçerli.
 
 ## WhatsApp
 

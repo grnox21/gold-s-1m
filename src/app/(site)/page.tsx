@@ -30,7 +30,7 @@ export default async function HomePage() {
     getActiveBarbers(),
     getActiveServices(),
     getSiteSettings(),
-    listGalleryImageUrls(),
+    listGalleryImageUrls("home"),
   ]);
 
   return (

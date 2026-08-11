@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Müşteriler" };
 
 export default async function AdminCustomersPage() {
-  await requireFullAdmin();
+  const { admin } = await requireFullAdmin();
   const supabase = createServiceClient();
   const { data: customers } = await supabase.from("customers").select("*").order("created_at", { ascending: false });
   const { data: appointments } = await supabase.from("appointments").select("customer_id, status");
@@ -27,7 +27,7 @@ export default async function AdminCustomersPage() {
       <AdminPageHeading
         title="Müşteriler"
         description="Randevu alan tüm müşteriler."
-        action={<ClearCustomersButton count={customers?.length ?? 0} />}
+        action={<ClearCustomersButton count={customers?.length ?? 0} isOwner={admin.role === "owner"} />}
       />
 
       <div className="overflow-hidden rounded-md border border-border">
