@@ -8,6 +8,7 @@ import { AdminPageHeading } from "@/components/admin/page-heading";
 import { AppointmentStatusBadge } from "@/components/admin/status-badge";
 import { AppointmentRowActions } from "@/components/admin/appointment-row-actions";
 import { NewAppointmentDialog } from "@/components/admin/new-appointment-dialog";
+import { ClearPastAppointmentsButton } from "@/components/admin/clear-past-appointments-button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatTL } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -50,10 +51,11 @@ export default async function AdminAppointmentsPage({
   if (statusFilter !== "all") query = query.eq("status", statusFilter);
   if (barberFilter !== "all") query = query.eq("barber_id", barberFilter);
 
-  const [{ data: appointmentsData }, { data: barbersData }, { data: servicesData }] = await Promise.all([
+  const [{ data: appointmentsData }, { data: barbersData }, { data: servicesData }, { count: pastCount }] = await Promise.all([
     query,
     supabase.from("barbers").select("*").order("sort_order"),
     supabase.from("services").select("*").eq("is_active", true).order("sort_order"),
+    supabase.from("appointments").select("id", { count: "exact", head: true }).lt("start_at", new Date().toISOString()),
   ]);
 
   const appointments = (appointmentsData ?? []) as Appointment[];
@@ -77,7 +79,12 @@ export default async function AdminAppointmentsPage({
       <AdminPageHeading
         title="Randevular"
         description="Tüm randevuları görüntüleyin, yeniden planlayın veya durumunu güncelleyin."
-        action={<NewAppointmentDialog barbers={barbers} services={services} />}
+        action={
+          <div className="flex flex-wrap items-center gap-3">
+            <ClearPastAppointmentsButton count={pastCount ?? 0} isOwner={admin.role === "owner"} />
+            <NewAppointmentDialog barbers={barbers} services={services} />
+          </div>
+        }
       />
 
       <div className="mb-6 flex flex-wrap items-center gap-6">

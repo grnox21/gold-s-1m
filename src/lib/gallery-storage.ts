@@ -45,6 +45,44 @@ export function isAllowedGalleryImageType(mimeType: string): boolean {
   return ALLOWED_TYPES.has(mimeType);
 }
 
+function extensionFor(mimeType: string): string {
+  return mimeType === "image/png" ? "png" : mimeType === "image/webp" ? "webp" : "jpg";
+}
+
+/**
+ * Uploads one validated image into the 'gallery' bucket under `folder/`
+ * and returns its public URL. Shared by gallery photo uploads (folder
+ * "" — object keys at the bucket root) and barber profile photo uploads
+ * (folder "barbers", see berberler/actions.ts) — same bucket, same public-
+ * read policy (0012_gallery_storage.sql), just a path prefix to keep the
+ * two kinds of image apart in the Storage browser.
+ */
+export async function uploadImageToBucket(
+  file: File,
+  folder: string
+): Promise<{ ok: true; path: string; url: string } | { ok: false; error: string }> {
+  if (!isAllowedGalleryImageType(file.type)) {
+    return { ok: false, error: "Yalnızca JPEG, PNG veya WebP görsel yükleyebilirsiniz." };
+  }
+  if (file.size > MAX_GALLERY_IMAGE_BYTES) {
+    return { ok: false, error: "Görsel çok büyük — en fazla 8MB olabilir." };
+  }
+
+  const objectPath = folder ? `${folder}/${crypto.randomUUID()}.${extensionFor(file.type)}` : `${crypto.randomUUID()}.${extensionFor(file.type)}`;
+
+  const supabase = createServiceClient();
+  const { error } = await supabase.storage.from(GALLERY_BUCKET).upload(objectPath, file, {
+    contentType: file.type,
+    cacheControl: "31536000",
+  });
+  if (error) return { ok: false, error: "Görsel yüklenemedi." };
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from(GALLERY_BUCKET).getPublicUrl(objectPath);
+  return { ok: true, path: objectPath, url: publicUrl };
+}
+
 function toGalleryImage(row: GalleryImageRow, url: string): GalleryImage {
   return {
     id: row.id,
@@ -105,25 +143,12 @@ export async function uploadGalleryImage(
   file: File,
   placements: GalleryPlacements
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  if (!isAllowedGalleryImageType(file.type)) {
-    return { ok: false, error: "Yalnızca JPEG, PNG veya WebP görsel yükleyebilirsiniz." };
-  }
-  if (file.size > MAX_GALLERY_IMAGE_BYTES) {
-    return { ok: false, error: "Görsel çok büyük — en fazla 8MB olabilir." };
-  }
-
-  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-  const objectPath = `${crypto.randomUUID()}.${ext}`;
+  const uploaded = await uploadImageToBucket(file, "");
+  if (!uploaded.ok) return uploaded;
 
   const supabase = createServiceClient();
-  const { error: uploadError } = await supabase.storage.from(GALLERY_BUCKET).upload(objectPath, file, {
-    contentType: file.type,
-    cacheControl: "31536000",
-  });
-  if (uploadError) return { ok: false, error: "Görsel yüklenemedi." };
-
   const { error: insertError } = await supabase.from("gallery_images").insert({
-    storage_path: objectPath,
+    storage_path: uploaded.path,
     show_home: placements.showHome,
     show_gallery: placements.showGallery,
     show_about: placements.showAbout,
@@ -131,7 +156,7 @@ export async function uploadGalleryImage(
   if (insertError) {
     // Don't leave an orphaned file with no DB row (and no way for the
     // admin UI to see or delete it) if the insert failed.
-    await supabase.storage.from(GALLERY_BUCKET).remove([objectPath]);
+    await supabase.storage.from(GALLERY_BUCKET).remove([uploaded.path]);
     return { ok: false, error: "Görsel kaydedilemedi." };
   }
 

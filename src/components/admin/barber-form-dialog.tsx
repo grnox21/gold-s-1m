@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useRef, useState } from "react";
+import Image from "next/image";
+import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Upload, User } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -20,7 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { barberSchema, type BarberFormValues } from "@/lib/validations/admin";
 import type { Barber } from "@/types/database";
-import { createBarber, updateBarber } from "@/app/giris/(protected)/berberler/actions";
+import { createBarber, updateBarber, uploadBarberPhoto } from "@/app/giris/(protected)/berberler/actions";
 
 function slugify(value: string) {
   return value
@@ -37,6 +39,8 @@ function slugify(value: string) {
 
 export function BarberFormDialog({ barber, trigger }: { barber?: Barber; trigger: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const isEdit = Boolean(barber);
 
   const {
@@ -58,6 +62,24 @@ export function BarberFormDialog({ barber, trigger }: { barber?: Barber; trigger
       isActive: barber?.is_active ?? true,
     },
   });
+  // useWatch (not form.watch()) — React Compiler can memoize around it.
+  const photoUrl = useWatch({ control, name: "photoUrl" });
+
+  async function handlePhotoSelect(file: File | undefined) {
+    if (!file) return;
+    setUploading(true);
+    const formData = new FormData();
+    formData.set("file", file);
+    const result = await uploadBarberPhoto(formData);
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+
+    if (!result.ok) {
+      toast.error(result.error ?? "Fotoğraf yüklenemedi.");
+      return;
+    }
+    setValue("photoUrl", result.url, { shouldValidate: true });
+  }
 
   async function onSubmit(values: BarberFormValues) {
     const result = isEdit ? await updateBarber(barber!.id, values) : await createBarber(values);
@@ -104,8 +126,26 @@ export function BarberFormDialog({ barber, trigger }: { barber?: Barber; trigger
             <Textarea id="bio" {...register("bio")} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="photoUrl">Fotoğraf URL</Label>
-            <Input id="photoUrl" placeholder="https://…" {...register("photoUrl")} />
+            <Label>Fotoğraf</Label>
+            <div className="flex items-center gap-4">
+              <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border-strong bg-surface">
+                {photoUrl ? (
+                  <Image src={photoUrl} alt="" width={64} height={64} className="size-full object-cover" />
+                ) : (
+                  <User className="size-6 text-ash" strokeWidth={1.5} />
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={(e) => handlePhotoSelect(e.target.files?.[0])}
+              />
+              <Button type="button" variant="outline" size="sm" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
+                <Upload className="size-3.5" /> {uploading ? "Yükleniyor…" : photoUrl ? "Değiştir" : "Fotoğraf Yükle"}
+              </Button>
+            </div>
             {errors.photoUrl && <p className="text-xs text-danger">{errors.photoUrl.message}</p>}
           </div>
           <div className="space-y-2">

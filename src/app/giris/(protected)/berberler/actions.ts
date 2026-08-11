@@ -4,8 +4,26 @@ import { revalidatePath } from "next/cache";
 
 import { requireFullAdmin } from "@/lib/auth/admin";
 import { createServiceClient } from "@/lib/supabase/service";
+import { uploadImageToBucket } from "@/lib/gallery-storage";
 import { barberSchema } from "@/lib/validations/admin";
 import type { ActionResult } from "@/lib/admin/types";
+
+/** Backs the "Fotoğraf Yükle" control in BarberFormDialog — replaces what
+ * used to be a paste-a-URL field. Uploads into the same 'gallery' Storage
+ * bucket the Görseller page uses (see lib/gallery-storage.ts), just under
+ * a barbers/ prefix, and hands back the public URL the form then submits
+ * as photo_url like before — no schema change needed on the barbers
+ * table. */
+export async function uploadBarberPhoto(formData: FormData): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  await requireFullAdmin();
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, error: "Bir görsel seçin." };
+  }
+
+  return uploadImageToBucket(file, "barbers");
+}
 
 export async function createBarber(input: unknown): Promise<ActionResult> {
   await requireFullAdmin();

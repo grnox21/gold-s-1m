@@ -137,6 +137,31 @@ const rescheduleSchema = z.object({
   newBarberId: z.uuid().optional(),
 });
 
+/**
+ * Deletes every appointment whose start time has already passed —
+ * regardless of status, since a past appointment nobody got around to
+ * marking completed/no_show is still history, not a live booking.
+ * appointment_services and notification_logs cascade on delete
+ * (see 0005/0006), so nothing is left orphaned.
+ *
+ * Owner-only, same "owner controls who can delete" boundary as
+ * clearAllCustomers() and gorseller's deleteGalleryImage() — checked
+ * here, not just hidden in the UI.
+ */
+export async function clearPastAppointments(): Promise<ActionResult> {
+  const { admin } = await requireAdmin();
+  if (admin.role !== "owner") {
+    return { ok: false, error: "Geçmiş randevuları yalnızca işletme sahibi silebilir." };
+  }
+
+  const supabase = createServiceClient();
+  const { error } = await supabase.from("appointments").delete().lt("start_at", new Date().toISOString());
+
+  if (error) return { ok: false, error: "Geçmiş randevular silinemedi." };
+  revalidateAppointmentPaths();
+  return { ok: true };
+}
+
 export async function adminRescheduleAppointment(input: unknown): Promise<ActionResult> {
   const { admin } = await requireAdmin();
   const parsed = rescheduleSchema.safeParse(input);

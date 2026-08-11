@@ -52,7 +52,15 @@ Migration'lar hakkında detay için `supabase/README.md`'ye bakın — orada ger
 
 Her görselin altında üç kutucuk var — **Ana Sayfa / Galeri / Hakkımızda** — hangi sayfalarda görüneceğini tek tek siz seçersiniz (birden fazlası da işaretlenebilir, hiçbiri de). Yükleme sırasındaki varsayılan üçü de işaretli, istediğiniz zaman bir görselin kutucuklarını değiştirebilirsiniz.
 
-**Silme yalnızca `owner` rolündeki hesaba açık** — `admin` rolündeki bir giriş görsel yükleyebilir ama silemez (buton hiç görünmez, ve sunucu tarafında da ayrıca engellenir). Aynı kısıtlama **Müşteriler** sayfasındaki "Tüm Kayıtları Sil" butonu için de geçerli.
+**Berber fotoğrafları** (`/giris/berberler`) de aynı şekilde — URL yapıştırmak yerine doğrudan cihazınızdan **"Fotoğraf Yükle"** ile yüklersiniz, aynı Storage altyapısını kullanır.
+
+## Kayıt Temizleme (owner-only)
+
+Aşağıdaki üç "toplu sil" butonu yalnızca `owner` rolündeki hesaba görünür — `admin` rolündeki bir giriş bu sayfaları kullanabilir ama silemez (sunucu tarafında da ayrıca engellenir):
+
+- **Müşteriler** → "Tüm Kayıtları Sil" — `customers` tablosunu boşaltır. Randevu geçmişi etkilenmez (bkz. `supabase/migrations/0011_customers_delete_set_null.sql`).
+- **Randevular** → "Geçmiş Randevuları Sil" — başlangıç saati geçmiş olan tüm randevuları (durumu ne olursa olsun) siler. Gelecekteki randevular etkilenmez.
+- **Görseller** → her görselin sağ üstündeki çöp kutusu ikonu.
 
 ## WhatsApp
 
