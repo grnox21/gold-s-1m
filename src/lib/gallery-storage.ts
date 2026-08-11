@@ -1,7 +1,10 @@
 import "server-only";
 
 import { createServiceClient } from "@/lib/supabase/service";
+import { MAX_GALLERY_IMAGE_BYTES } from "@/lib/gallery-constants";
 import type { GalleryImageRow } from "@/types/database";
+
+export { MAX_GALLERY_IMAGE_BYTES };
 
 /**
  * Shop interior photos, managed from /giris/gorseller (owner/admin only —
@@ -18,11 +21,6 @@ import type { GalleryImageRow } from "@/types/database";
  * bytes. The app always writes/removes both together.
  */
 const GALLERY_BUCKET = "gallery";
-
-/** 8MB per photo — comfortably above a typical phone-camera JPEG, well
- * under the Server Action body limit set in next.config.ts (leaves room
- * for multipart/FormData overhead on top of the raw file bytes). */
-export const MAX_GALLERY_IMAGE_BYTES = 8 * 1024 * 1024;
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 

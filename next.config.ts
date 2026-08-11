@@ -12,10 +12,13 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      // Default is 1MB — too small for a phone-camera photo. Matches
-      // MAX_GALLERY_IMAGE_BYTES in lib/gallery-storage.ts plus headroom
-      // for multipart/FormData overhead on top of the raw file bytes.
-      bodySizeLimit: "10mb",
+      // Default is 1MB — way too small for a phone-camera photo. Needs to
+      // clear MAX_GALLERY_IMAGE_BYTES (lib/gallery-storage.ts) with room
+      // to spare for multipart/FormData overhead on top of the raw file
+      // bytes, or a large-but-still-valid photo gets killed by this
+      // framework-level limit before validation ever gets a chance to
+      // return a friendly error — it just fails outright.
+      bodySizeLimit: "20mb",
     },
   },
 };

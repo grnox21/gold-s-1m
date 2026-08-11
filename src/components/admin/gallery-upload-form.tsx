@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { uploadGalleryImage } from "@/app/giris/(protected)/gorseller/actions";
+import { MAX_GALLERY_IMAGE_BYTES } from "@/lib/gallery-constants";
 
 const PLACEMENT_OPTIONS = [
   { key: "showHome", label: "Ana Sayfa" },
@@ -31,17 +32,32 @@ export function GalleryUploadForm() {
     // the toasts (and any failure) attributable to one file at a time.
     let succeeded = 0;
     for (const file of Array.from(files)) {
+      // Fail fast on an oversized file instead of waiting on a round trip
+      // that a body-size limit would kill anyway with no useful message.
+      if (file.size > MAX_GALLERY_IMAGE_BYTES) {
+        toast.error(`${file.name}: Görsel çok büyük — en fazla ${Math.floor(MAX_GALLERY_IMAGE_BYTES / (1024 * 1024))}MB olabilir.`);
+        continue;
+      }
+
       const formData = new FormData();
       formData.set("file", file);
       if (placements.showHome) formData.set("showHome", "on");
       if (placements.showGallery) formData.set("showGallery", "on");
       if (placements.showAbout) formData.set("showAbout", "on");
 
-      const result = await uploadGalleryImage(formData);
-      if (result.ok) {
-        succeeded++;
-      } else {
-        toast.error(`${file.name}: ${result.error ?? "Yüklenemedi."}`);
+      try {
+        const result = await uploadGalleryImage(formData);
+        if (result.ok) {
+          succeeded++;
+        } else {
+          toast.error(`${file.name}: ${result.error ?? "Yüklenemedi."}`);
+        }
+      } catch {
+        // A thrown error here (network drop, a stale deploy's Server
+        // Action id no longer existing, etc.) must never leave the button
+        // stuck on "Yükleniyor…" with no explanation — that's the bug
+        // that made this look like it silently hung.
+        toast.error(`${file.name}: Bağlantı hatası — tekrar deneyin.`);
       }
     }
 

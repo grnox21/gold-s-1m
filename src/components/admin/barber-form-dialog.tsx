@@ -23,6 +23,7 @@ import {
 import { barberSchema, type BarberFormValues } from "@/lib/validations/admin";
 import type { Barber } from "@/types/database";
 import { createBarber, updateBarber, uploadBarberPhoto } from "@/app/giris/(protected)/berberler/actions";
+import { MAX_GALLERY_IMAGE_BYTES } from "@/lib/gallery-constants";
 
 function slugify(value: string) {
   return value
@@ -67,18 +68,35 @@ export function BarberFormDialog({ barber, trigger }: { barber?: Barber; trigger
 
   async function handlePhotoSelect(file: File | undefined) {
     if (!file) return;
+
+    // Fail fast on an oversized file instead of waiting on a round trip
+    // that a body-size limit would kill anyway with no useful message.
+    if (file.size > MAX_GALLERY_IMAGE_BYTES) {
+      toast.error(`Görsel çok büyük — en fazla ${Math.floor(MAX_GALLERY_IMAGE_BYTES / (1024 * 1024))}MB olabilir.`);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     setUploading(true);
     const formData = new FormData();
     formData.set("file", file);
-    const result = await uploadBarberPhoto(formData);
-    setUploading(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
 
-    if (!result.ok) {
-      toast.error(result.error ?? "Fotoğraf yüklenemedi.");
-      return;
+    try {
+      const result = await uploadBarberPhoto(formData);
+      if (!result.ok) {
+        toast.error(result.error ?? "Fotoğraf yüklenemedi.");
+        return;
+      }
+      setValue("photoUrl", result.url, { shouldValidate: true });
+    } catch {
+      // A thrown error here (network drop, a stale deploy's Server Action
+      // id no longer existing, etc.) must never leave the button stuck on
+      // "Yükleniyor…" with no explanation.
+      toast.error("Bağlantı hatası — tekrar deneyin.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
-    setValue("photoUrl", result.url, { shouldValidate: true });
   }
 
   async function onSubmit(values: BarberFormValues) {
