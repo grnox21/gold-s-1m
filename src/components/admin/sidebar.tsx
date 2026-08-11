@@ -14,6 +14,7 @@ import {
   MessageCircle,
   Settings,
   BarChart3,
+  Image as ImageIcon,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ const NAV = [
   { href: "/giris/berberler", label: "Berberler", icon: UserCircle, fullAdminOnly: true },
   { href: "/giris/hizmetler", label: "Hizmetler", icon: Scissors, fullAdminOnly: true },
   { href: "/giris/musteriler", label: "Müşteriler", icon: Users, fullAdminOnly: true },
+  { href: "/giris/gorseller", label: "Görseller", icon: ImageIcon, fullAdminOnly: true },
   { href: "/giris/calisma-saatleri", label: "Çalışma Saatleri", icon: Clock, fullAdminOnly: true },
   { href: "/giris/engellenen-saatler", label: "Engellenen Saatler", icon: Ban, fullAdminOnly: true },
   { href: "/giris/whatsapp-ayarlari", label: "WhatsApp Ayarları", icon: MessageCircle, fullAdminOnly: true },

@@ -19,7 +19,7 @@ npm run dev
 ## Supabase Kurulumu
 
 1. [supabase.com](https://supabase.com) üzerinde bir proje oluşturun (veya self-host edin).
-2. **SQL Editor** → `supabase/migrations/` altındaki dosyaları **sırayla** (0001 → 0009) çalıştırın.
+2. **SQL Editor** → `supabase/migrations/` altındaki dosyaları **sırayla** (0001 → 0012) çalıştırın. 0012, Görseller sayfasının kullandığı `gallery` adında herkese-açık-okunabilir bir Storage bucket'ı oluşturur — ekstra bir şey yapmanız gerekmez.
 3. `supabase/seed.sql` dosyasını çalıştırın — 3 yer tutucu berber, 8 hizmet ve çalışma saatleri ekler; hepsi `/giris` üzerinden düzenlenebilir.
 4. Project Settings → API'den `URL`, `anon key` ve `service_role key` değerlerini alıp `.env.local`'e yazın.
 5. İlk admin hesabınızı oluşturun (işletme sahibi/genel yönetici — tüm berberlerin tüm randevularını görür): Authentication → Users'dan bir kullanıcı ekleyin, sonra SQL Editor'de:
@@ -44,14 +44,11 @@ npm run dev
 
 Migration'lar hakkında detay için `supabase/README.md`'ye bakın — orada gerçek bir PostgreSQL 16 üzerinde doğrulanan şema ve **çifte rezervasyon koruması testinin** dökümü de var.
 
-## Gerçek Marka Varlıkları
+## Marka Varlıkları
 
-Sohbette paylaşılan logo ve mekân fotoğrafı bu ortamda diske kaydedilemedi (mesaj içi görselleri dosyaya çıkaran bir araç yok) — site şimdilik tipografik bir "Yusuf Demir" wordmark'ı ve tasarlanmış bir hero/galeri boş durumuyla geliyor. Gerçek dosyaları eklemek için:
+**Logo** dosya olarak elle eklenir (`public/brand/logo.png` + `logo-mark.png`) — eklendiği anda Nav, Footer, favicon, Apple ikonu ve Open Graph görseli **otomatik olarak** gerçek logoyu kullanır, kod değişikliği gerekmez. Detay için `public/brand/README.md`.
 
-- `public/brand/logo.png` — saydam, siyah daire kaldırılmış logo
-- `public/gallery/*.jpg` — mekân fotoğrafları (herhangi bir dosya adı)
-
-İkisi de eklendiği anda hero, galeri, footer ve favicon **otomatik olarak** gerçek görselleri kullanır — kod değişikliği gerekmez. Detay için `public/brand/README.md` ve `public/gallery/README.md`.
+**Salon fotoğrafları** ise dosya olarak eklenmez — `/giris/gorseller` sayfasından (owner/admin girişiyle) doğrudan yüklenir/silinir ve Supabase Storage'da saklanır. Yüklenen her görsel Ana Sayfa, Galeri ve Hakkımızda sayfalarında otomatik olarak görünür. (Sunucusuz barındırmada `public/` klasörüne çalışma zamanında yazılan dosyalar kalıcı olmaz, bu yüzden logo gibi dosya-bırak yöntemi burada işe yaramaz — bkz. `src/lib/gallery-storage.ts`.)
 
 ## WhatsApp
 

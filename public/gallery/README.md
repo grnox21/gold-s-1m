@@ -1,6 +1,10 @@
-Drop shop interior photos here (any filenames, .jpg/.png/.webp). The
-gallery page and the homepage's interior section
-(src/lib/brand-assets.ts#listGalleryImages) read this folder directly and
-lay out whatever they find — no code or database changes needed. Empty for
-now, since the real interior photo shared in chat couldn't be saved to
-disk in this environment (see public/brand/README.md for the same note).
+Salon fotoğrafları artık bu klasörden değil, admin panelinden yönetiliyor:
+`/giris/gorseller` (owner/admin girişiyle). Oradan yüklenen görseller
+Supabase Storage'da saklanır ve Ana Sayfa, Galeri, Hakkımızda
+sayfalarında otomatik olarak görünür — kod veya dosya değişikliği
+gerekmez.
+
+(Bu klasöre elle dosya bırakmak artık bir şey yapmaz — bkz.
+src/lib/gallery-storage.ts. Sunucusuz barındırmada (Vercel gibi) buraya
+yazılan dosyalar zaten her deploy'da silinirdi, bu yüzden Storage'a
+taşındı.)

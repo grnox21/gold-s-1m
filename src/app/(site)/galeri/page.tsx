@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 
 import { PageHeader } from "@/components/site/page-header";
-import { listGalleryImages } from "@/lib/brand-assets";
+import { listGalleryImageUrls } from "@/lib/gallery-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   description: "Yusuf Demir Erkek Kuaförü salonundan kareler.",
 };
 
-export default function GaleriPage() {
-  const images = listGalleryImages();
+export default async function GaleriPage() {
+  const images = await listGalleryImageUrls();
 
   return (
     <>

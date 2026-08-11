@@ -4,6 +4,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { requireFullAdmin } from "@/lib/auth/admin";
 import type { Customer } from "@/types/database";
 import { AdminPageHeading } from "@/components/admin/page-heading";
+import { ClearCustomersButton } from "@/components/admin/clear-customers-button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,11 @@ export default async function AdminCustomersPage() {
 
   return (
     <div>
-      <AdminPageHeading title="Müşteriler" description="Randevu alan tüm müşteriler." />
+      <AdminPageHeading
+        title="Müşteriler"
+        description="Randevu alan tüm müşteriler."
+        action={<ClearCustomersButton count={customers?.length ?? 0} />}
+      />
 
       <div className="overflow-hidden rounded-md border border-border">
         <Table>

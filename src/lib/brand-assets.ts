@@ -16,9 +16,10 @@ import path from "node:path";
  *                                 this is what the browser-tab favicon uses
  *   public/brand/logo-dark.png — optional, only if a light-ground variant
  *                                 is ever needed
- *   public/gallery/*.jpg|png   — shop interior photos, any filenames
  *
- * See public/brand/README.md and public/gallery/README.md.
+ * See public/brand/README.md. Shop interior photos work the same way in
+ * spirit but live in Supabase Storage, not this folder — managed from
+ * /giris/gorseller, see lib/gallery-storage.ts.
  */
 
 function fileExists(relPath: string): boolean {
@@ -61,17 +62,4 @@ export function logoDataUri(variant: "logo" | "logo-mark" = "logo"): string | nu
   if (!fileExists(relPath)) return null;
   const bytes = fs.readFileSync(path.join(process.cwd(), "public", relPath));
   return `data:image/png;base64,${bytes.toString("base64")}`;
-}
-
-export function listGalleryImages(): string[] {
-  const dir = path.join(process.cwd(), "public", "gallery");
-  try {
-    return fs
-      .readdirSync(dir)
-      .filter((f) => /\.(jpe?g|png|webp)$/i.test(f))
-      .sort()
-      .map((f) => `/gallery/${f}`);
-  } catch {
-    return [];
-  }
 }

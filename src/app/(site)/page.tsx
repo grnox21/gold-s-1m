@@ -10,7 +10,7 @@ import { Testimonials } from "@/components/site/testimonials";
 import { LocationSection } from "@/components/site/location-section";
 import { FinalCta } from "@/components/site/final-cta";
 import { getActiveBarbers, getActiveServices, getSiteSettings } from "@/lib/site-data";
-import { listGalleryImages } from "@/lib/brand-assets";
+import { listGalleryImageUrls } from "@/lib/gallery-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -26,12 +26,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [barbers, services, settings] = await Promise.all([
+  const [barbers, services, settings, gallery] = await Promise.all([
     getActiveBarbers(),
     getActiveServices(),
     getSiteSettings(),
+    listGalleryImageUrls(),
   ]);
-  const gallery = listGalleryImages();
 
   return (
     <>

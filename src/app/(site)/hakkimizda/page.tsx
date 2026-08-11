@@ -5,7 +5,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/site/page-header";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/site/reveal";
-import { listGalleryImages } from "@/lib/brand-assets";
+import { listGalleryImageUrls } from "@/lib/gallery-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -14,8 +14,8 @@ export const metadata: Metadata = {
   description: "Yusuf Demir Erkek Kuaförü'nün hikayesi: özenli zanaat, kişiye özel bakım ve modern bir atmosfer.",
 };
 
-export default function HakkimizdaPage() {
-  const [photo] = listGalleryImages();
+export default async function HakkimizdaPage() {
+  const [photo] = await listGalleryImageUrls();
 
   return (
     <>
