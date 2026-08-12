@@ -11,6 +11,7 @@ import { LocationSection } from "@/components/site/location-section";
 import { FinalCta } from "@/components/site/final-cta";
 import { getActiveBarbers, getActiveServices, getSiteSettings } from "@/lib/site-data";
 import { listGalleryImageUrls } from "@/lib/gallery-storage";
+import { heroImageSrcs } from "@/lib/brand-assets";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero heroImage={gallery[0] ?? null} />
+      <Hero images={heroImageSrcs()} />
       <IntroSection />
       <ServicesPreview services={services} />
       <BarbersPreview barbers={barbers} />

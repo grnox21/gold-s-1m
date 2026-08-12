@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import gsap from "gsap";
 
 import { Button } from "@/components/ui/button";
+import type { HeroImages } from "@/lib/brand-assets";
 
-export function Hero({ heroImage }: { heroImage: string | null }) {
+export function Hero({ images }: { images: HeroImages }) {
+  const { desktop, mobile } = images;
+  const fallbackSrc = desktop ?? mobile;
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,12 +30,20 @@ export function Hero({ heroImage }: { heroImage: string | null }) {
 
   return (
     <section ref={rootRef} className="relative flex min-h-[92vh] items-end overflow-hidden bg-ink">
-      {/* Background: the real interior photo once available, otherwise a
+      {/* Background: the real hero photo once available, otherwise a
           textured stand-in evoking the same materials (marble, warm gold
-          rim-light on dark walls) described in the shop reference photo. */}
+          rim-light on dark walls) described in the shop reference photo.
+          <picture> (not next/image) is deliberate here — desktop.webp and
+          mobile.webp are two different crops of the same scene, not two
+          resolutions of the same crop, so this needs real art direction:
+          the browser fetches only the variant that matches, not both. */}
       <div className="absolute inset-0">
-        {heroImage ? (
-          <Image src={heroImage} alt="Yusuf Demir Erkek Kuaförü iç mekan" fill priority className="object-cover" />
+        {fallbackSrc ? (
+          <picture>
+            {mobile && <source media="(max-width: 767px)" srcSet={mobile} />}
+            {desktop && <source media="(min-width: 768px)" srcSet={desktop} />}
+            <img src={fallbackSrc} alt="Yusuf Demir Erkek Kuaförü" className="absolute inset-0 size-full object-cover" />
+          </picture>
         ) : (
           <div
             className="absolute inset-0"

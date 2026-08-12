@@ -16,10 +16,20 @@ import path from "node:path";
  *                                 this is what the browser-tab favicon uses
  *   public/brand/logo-dark.png — optional, only if a light-ground variant
  *                                 is ever needed
+ *   public/hero/desktop.webp   — homepage hero background, wide/landscape
+ *                                 crop, shown at md breakpoint and above
+ *   public/hero/mobile.webp    — same scene, tall/portrait crop, shown
+ *                                 below md — art direction, not just a
+ *                                 resize, so the subject stays framed
+ *                                 well on a phone instead of getting
+ *                                 cropped awkwardly by object-cover
  *
- * See public/brand/README.md. Shop interior photos work the same way in
+ * See public/brand/README.md. Shop interior photos for the Galeri page,
+ * Hakkımızda, and the homepage's interior grid work the same way in
  * spirit but live in Supabase Storage, not this folder — managed from
- * /giris/gorseller, see lib/gallery-storage.ts.
+ * /giris/gorseller, see lib/gallery-storage.ts. The hero background above
+ * is a one-time drop-in like the logo, not something that changes often
+ * enough to need its own admin upload UI.
  */
 
 function fileExists(relPath: string): boolean {
@@ -51,6 +61,21 @@ export function navLogoSrc(): string | null {
   if (hasLogoMarkImage()) return "/brand/logo-mark.png";
   if (hasLogoImage()) return "/brand/logo.png";
   return null;
+}
+
+export interface HeroImages {
+  desktop: string | null;
+  mobile: string | null;
+}
+
+/** Falls back to the textured gradient placeholder Hero already draws
+ * when a variant is missing — desktop and mobile are independent, so
+ * dropping in just one still works instead of an all-or-nothing pair. */
+export function heroImageSrcs(): HeroImages {
+  return {
+    desktop: fileExists("hero/desktop.webp") ? "/hero/desktop.webp" : null,
+    mobile: fileExists("hero/mobile.webp") ? "/hero/mobile.webp" : null,
+  };
 }
 
 /** Reads a public/ asset and returns it as a `data:` URI, or null if it
