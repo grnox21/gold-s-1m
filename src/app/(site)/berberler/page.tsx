@@ -45,9 +45,14 @@ export default async function BerberlerPage() {
                   <p className="label-caps mb-3 text-[0.66rem] text-gold">{barber.specialty ?? "Berber"}</p>
                   <h2 className="font-display text-3xl text-warm-white sm:text-4xl">{barber.name}</h2>
                   {barber.bio && <p className="mt-5 max-w-md text-base leading-relaxed text-ash">{barber.bio}</p>}
-                  <Button asChild className="mt-8">
-                    <Link href="/randevu">{barber.name.split(" ")[0]}&apos;den Randevu Al</Link>
-                  </Button>
+                  <div className="mt-8 flex flex-wrap gap-3">
+                    <Button asChild>
+                      <Link href="/randevu">{barber.name.split(" ")[0]}&apos;den Randevu Al</Link>
+                    </Button>
+                    <Button asChild variant="outline">
+                      <Link href={`/berberler/${barber.slug}`}>Profilini Gör</Link>
+                    </Button>
+                  </div>
                 </div>
               </article>
             ))}

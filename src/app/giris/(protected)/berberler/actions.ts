@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireFullAdmin } from "@/lib/auth/admin";
 import { createServiceClient } from "@/lib/supabase/service";
 import { uploadImageToBucket } from "@/lib/gallery-storage";
+import { addBarberPhoto, removeAllBarberPhotos, removeBarberPhoto, type BarberPhoto } from "@/lib/barber-photos";
 import { barberSchema } from "@/lib/validations/admin";
 import type { ActionResult } from "@/lib/admin/types";
 
@@ -79,10 +80,53 @@ export async function updateBarber(id: string, input: unknown): Promise<ActionRe
 
 export async function deleteBarber(id: string): Promise<ActionResult> {
   await requireFullAdmin();
+  // Clean up this barber's work-photo Storage objects first — the
+  // barber_photos rows cascade-delete via FK once the barbers row is
+  // gone, but that would leave their bytes orphaned in Storage with
+  // nothing left to reach them from.
+  await removeAllBarberPhotos(id);
   const supabase = createServiceClient();
   const { error } = await supabase.from("barbers").delete().eq("id", id);
   if (error) return { ok: false, error: "Berber silinemedi. Randevu geçmişi olan berberleri pasif yapmanız önerilir." };
   revalidatePath("/giris/berberler");
   revalidatePath("/berberler");
+  revalidatePath("/berberler/[slug]", "page");
+  return { ok: true };
+}
+
+/**
+ * Backs the "Çalışmalar" (works) dialog in /giris/berberler — a barber's
+ * own photo gallery on their public profile page, separate from the
+ * single headshot uploadBarberPhoto above manages. Returns the new photo
+ * (with its public URL) so the dialog can add it to its list without a
+ * refetch.
+ */
+export async function uploadBarberWorkPhoto(
+  barberId: string,
+  formData: FormData
+): Promise<{ ok: true; photo: BarberPhoto } | { ok: false; error: string }> {
+  await requireFullAdmin();
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, error: "Bir görsel seçin." };
+  }
+
+  const result = await addBarberPhoto(barberId, file);
+  if (!result.ok) return result;
+
+  revalidatePath("/giris/berberler");
+  revalidatePath("/berberler/[slug]", "page");
+  return result;
+}
+
+export async function deleteBarberWorkPhoto(id: string): Promise<ActionResult> {
+  await requireFullAdmin();
+
+  const result = await removeBarberPhoto(id);
+  if (!result.ok) return result;
+
+  revalidatePath("/giris/berberler");
+  revalidatePath("/berberler/[slug]", "page");
   return { ok: true };
 }

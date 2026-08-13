@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { createServiceClient } from "@/lib/supabase/service";
 import { requireFullAdmin } from "@/lib/auth/admin";
 import { getBarberLogins } from "@/lib/admin/barber-logins";
+import { listBarberPhotosGrouped } from "@/lib/barber-photos";
 import type { Barber } from "@/types/database";
 import { AdminPageHeading } from "@/components/admin/page-heading";
 import { BarberFormDialog } from "@/components/admin/barber-form-dialog";
@@ -19,9 +20,10 @@ export const metadata: Metadata = { title: "Berberler" };
 export default async function AdminBarbersPage() {
   await requireFullAdmin();
   const supabase = createServiceClient();
-  const [{ data }, logins] = await Promise.all([
+  const [{ data }, logins, photosByBarberId] = await Promise.all([
     supabase.from("barbers").select("*").order("sort_order"),
     getBarberLogins(),
+    listBarberPhotosGrouped(),
   ]);
   const barbers = (data ?? []) as Barber[];
   const loginByBarberId = new Map(logins.map((l) => [l.barberId, l]));
@@ -67,7 +69,7 @@ export default async function AdminBarbersPage() {
                   <BarberLoginCell barber={barber} login={loginByBarberId.get(barber.id) ?? null} />
                 </TableCell>
                 <TableCell className="pr-6 text-right">
-                  <BarberRowActions barber={barber} />
+                  <BarberRowActions barber={barber} photos={photosByBarberId.get(barber.id) ?? []} />
                 </TableCell>
               </TableRow>
             ))}

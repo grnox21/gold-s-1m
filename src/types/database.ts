@@ -158,3 +158,14 @@ export interface GalleryImageRow {
   show_about: boolean;
   created_at: string;
 }
+
+/** A "works" photo on a barber's own public profile page
+ * (/berberler/[slug]), uploaded from /giris/berberler. Distinct from
+ * Barber.photo_url, which is the single headshot on barber cards/the
+ * berberler list — a barber can have any number of these. */
+export interface BarberPhotoRow {
+  id: string;
+  barber_id: string;
+  storage_path: string;
+  created_at: string;
+}

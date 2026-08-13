@@ -16,7 +16,7 @@ export function BarbersPreview({ barbers }: { barbers: Barber[] }) {
           {barbers.map((barber) => (
             <Link
               key={barber.id}
-              href="/berberler"
+              href={`/berberler/${barber.slug}`}
               className="group block overflow-hidden rounded-md border border-border bg-ink transition-colors hover:border-gold/40"
             >
               <div className="relative aspect-[4/5] overflow-hidden bg-surface-raised">
