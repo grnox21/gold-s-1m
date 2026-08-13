@@ -13,17 +13,17 @@ import type { ActionResult } from "@/lib/admin/types";
 
 /** Every public page a gallery photo can appear on — revalidated together
  * so an upload/delete/placement change shows up immediately everywhere,
- * not just here. */
+ * not just here. The homepage isn't in this list on purpose — its
+ * "Çalışmalarımız" section doesn't read from here anymore, see
+ * public/calismalarimiz/README.md. */
 function revalidateGalleryConsumers() {
   revalidatePath("/giris/gorseller");
-  revalidatePath("/");
   revalidatePath("/galeri");
   revalidatePath("/hakkimizda");
 }
 
 function placementsFromFormData(formData: FormData): GalleryPlacements {
   return {
-    showHome: formData.get("showHome") === "on",
     showGallery: formData.get("showGallery") === "on",
     showAbout: formData.get("showAbout") === "on",
   };

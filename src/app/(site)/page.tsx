@@ -10,8 +10,7 @@ import { Testimonials } from "@/components/site/testimonials";
 import { LocationSection } from "@/components/site/location-section";
 import { FinalCta } from "@/components/site/final-cta";
 import { getActiveBarbers, getActiveServices, getSiteSettings } from "@/lib/site-data";
-import { listGalleryImageUrls } from "@/lib/gallery-storage";
-import { heroImageSrcs } from "@/lib/brand-assets";
+import { heroImageSrcs, listStaticWorkPhotos } from "@/lib/brand-assets";
 
 export const dynamic = "force-dynamic";
 
@@ -27,11 +26,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [barbers, services, settings, gallery] = await Promise.all([
+  const [barbers, services, settings] = await Promise.all([
     getActiveBarbers(),
     getActiveServices(),
     getSiteSettings(),
-    listGalleryImageUrls("home"),
   ]);
 
   return (
@@ -40,7 +38,7 @@ export default async function HomePage() {
       <PopularCuts services={services} />
       <BarbersPreview barbers={barbers} />
       <ServicesPreview services={services} />
-      <InteriorSection images={gallery} />
+      <InteriorSection images={listStaticWorkPhotos()} />
       <WhyUs />
       <Testimonials googleMapsUrl={settings.google_maps_url} />
       <LocationSection settings={settings} />

@@ -24,10 +24,9 @@ const GALLERY_BUCKET = "gallery";
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-export type GalleryPlacement = "home" | "gallery" | "about";
+export type GalleryPlacement = "gallery" | "about";
 
 export interface GalleryPlacements {
-  showHome: boolean;
   showGallery: boolean;
   showAbout: boolean;
 }
@@ -86,7 +85,6 @@ function toGalleryImage(row: GalleryImageRow, url: string): GalleryImage {
     id: row.id,
     path: row.storage_path,
     url,
-    showHome: row.show_home,
     showGallery: row.show_gallery,
     showAbout: row.show_about,
   };
@@ -111,17 +109,16 @@ export async function listGalleryImages(): Promise<GalleryImage[]> {
   });
 }
 
-const PLACEMENT_COLUMN: Record<GalleryPlacement, "show_home" | "show_gallery" | "show_about"> = {
-  home: "show_home",
+const PLACEMENT_COLUMN: Record<GalleryPlacement, "show_gallery" | "show_about"> = {
   gallery: "show_gallery",
   about: "show_about",
 };
 
 /** Public-page view — just the URLs for images placed on `placement`,
- * newest first. Used by the Home, Galeri, and Hakkımızda pages, each with
- * a different placement so an image can be scoped to only where it
- * belongs (e.g. a wide hero-style shot on Ana Sayfa without also
- * cluttering the Hakkımızda story photo slot). */
+ * newest first. Used by the Galeri and Hakkımızda pages, each with a
+ * different placement so an image can be scoped to only where it belongs.
+ * The homepage's "Çalışmalarımız" section deliberately isn't part of
+ * this — see lib/brand-assets.ts#listStaticWorkPhotos for why. */
 export async function listGalleryImageUrls(placement: GalleryPlacement): Promise<string[]> {
   const supabase = createServiceClient();
   const { data, error } = await supabase
@@ -147,7 +144,6 @@ export async function uploadGalleryImage(
   const supabase = createServiceClient();
   const { error: insertError } = await supabase.from("gallery_images").insert({
     storage_path: uploaded.path,
-    show_home: placements.showHome,
     show_gallery: placements.showGallery,
     show_about: placements.showAbout,
   });
@@ -181,7 +177,7 @@ export async function updateGalleryImagePlacements(
   const supabase = createServiceClient();
   const { error } = await supabase
     .from("gallery_images")
-    .update({ show_home: placements.showHome, show_gallery: placements.showGallery, show_about: placements.showAbout })
+    .update({ show_gallery: placements.showGallery, show_about: placements.showAbout })
     .eq("id", id);
 
   if (error) return { ok: false, error: "Görünürlük güncellenemedi." };

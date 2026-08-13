@@ -20,7 +20,6 @@ import { deleteGalleryImage, updateGalleryImagePlacements } from "@/app/giris/(p
 import type { GalleryImage } from "@/lib/gallery-storage";
 
 const PLACEMENT_OPTIONS = [
-  { key: "showHome", label: "Ana Sayfa" },
   { key: "showGallery", label: "Galeri" },
   { key: "showAbout", label: "Hakkımızda" },
 ] as const;
@@ -29,7 +28,6 @@ export function GalleryImageCard({ image, canDelete }: { image: GalleryImage; ca
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [placements, setPlacements] = useState({
-    showHome: image.showHome,
     showGallery: image.showGallery,
     showAbout: image.showAbout,
   });

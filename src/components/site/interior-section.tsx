@@ -30,7 +30,7 @@ export function InteriorSection({ images }: { images: string[] }) {
           </Reveal>
         ) : (
           <div className="mt-14 flex aspect-[21/9] items-center justify-center rounded-md border border-dashed border-border-strong">
-            <p className="label-caps text-[0.66rem] text-ash">Salon fotoğrafları admin panelinden eklenecek</p>
+            <p className="label-caps text-[0.66rem] text-ash">Fotoğraflar yakında eklenecek</p>
           </div>
         )}
       </div>

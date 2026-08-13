@@ -154,7 +154,6 @@ export type CreateAppointmentResult = Appointment;
 export interface GalleryImageRow {
   id: string;
   storage_path: string;
-  show_home: boolean;
   show_gallery: boolean;
   show_about: boolean;
   created_at: string;

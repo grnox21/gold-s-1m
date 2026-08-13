@@ -23,13 +23,17 @@ import path from "node:path";
  *                                 resize, so the subject stays framed
  *                                 well on a phone instead of getting
  *                                 cropped awkwardly by object-cover
+ *   public/calismalarimiz/*    — homepage "Çalışmalarımız" section, up to
+ *                                 3 images, any filenames — deliberately
+ *                                 NOT admin-uploadable (see below)
  *
- * See public/brand/README.md. Shop interior photos for the Galeri page,
- * Hakkımızda, and the homepage's interior grid work the same way in
- * spirit but live in Supabase Storage, not this folder — managed from
- * /giris/gorseller, see lib/gallery-storage.ts. The hero background above
- * is a one-time drop-in like the logo, not something that changes often
- * enough to need its own admin upload UI.
+ * See public/brand/README.md. Shop interior photos for the Galeri page
+ * and Hakkımızda work the same way in spirit but live in Supabase
+ * Storage, not this folder — managed from /giris/gorseller, see
+ * lib/gallery-storage.ts. The homepage's "Çalışmalarımız" section used to
+ * be admin-managed the same way ("Ana Sayfa" placement) but was
+ * deliberately moved to this code-only drop-in instead — nobody can
+ * change what it shows except by editing files and deploying.
  */
 
 function fileExists(relPath: string): boolean {
@@ -87,4 +91,23 @@ export function logoDataUri(variant: "logo" | "logo-mark" = "logo"): string | nu
   if (!fileExists(relPath)) return null;
   const bytes = fs.readFileSync(path.join(process.cwd(), "public", relPath));
   return `data:image/png;base64,${bytes.toString("base64")}`;
+}
+
+/** Homepage "Çalışmalarımız" section photos — a code-only drop-in, on
+ * purpose (see the file-level comment above): drop up to a few images into
+ * public/calismalarimiz/, any filenames, and they show up next deploy.
+ * Sorted by filename so the order is predictable and controllable (e.g.
+ * "01-...", "02-..."). Empty array (not an error) when the folder doesn't
+ * exist yet — InteriorSection already has an empty state for that. */
+export function listStaticWorkPhotos(): string[] {
+  const dir = path.join(process.cwd(), "public", "calismalarimiz");
+  try {
+    return fs
+      .readdirSync(dir)
+      .filter((f) => /\.(jpe?g|png|webp)$/i.test(f))
+      .sort()
+      .map((f) => `/calismalarimiz/${f}`);
+  } catch {
+    return [];
+  }
 }

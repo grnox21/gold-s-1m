@@ -10,7 +10,6 @@ import { uploadGalleryImage } from "@/app/giris/(protected)/gorseller/actions";
 import { MAX_GALLERY_IMAGE_BYTES } from "@/lib/gallery-constants";
 
 const PLACEMENT_OPTIONS = [
-  { key: "showHome", label: "Ana Sayfa" },
   { key: "showGallery", label: "Galeri" },
   { key: "showAbout", label: "Hakkımızda" },
 ] as const;
@@ -20,8 +19,10 @@ export function GalleryUploadForm() {
   const [uploading, setUploading] = useState(false);
   // Default: new photos show everywhere, same as before per-image
   // placement existed — narrowing it down afterwards is a click away on
-  // each card, not something every upload has to think about.
-  const [placements, setPlacements] = useState({ showHome: true, showGallery: true, showAbout: true });
+  // each card, not something every upload has to think about. Ana Sayfa
+  // isn't an option here at all — the homepage's "Çalışmalarımız" section
+  // is a code-only drop-in (public/calismalarimiz/), not admin-uploadable.
+  const [placements, setPlacements] = useState({ showGallery: true, showAbout: true });
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -41,7 +42,6 @@ export function GalleryUploadForm() {
 
       const formData = new FormData();
       formData.set("file", file);
-      if (placements.showHome) formData.set("showHome", "on");
       if (placements.showGallery) formData.set("showGallery", "on");
       if (placements.showAbout) formData.set("showAbout", "on");
 
