@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Scissors, Wand2, Droplets } from "lucide-react";
 
 import type { Service } from "@/types/database";
@@ -7,6 +8,7 @@ import { Reveal } from "./reveal";
 interface DisplayItem {
   id: string;
   icon: typeof Scissors;
+  image: string;
   name: string;
   description?: string | null;
 }
@@ -16,20 +18,25 @@ interface DisplayItem {
  * not invented style names. The third slot is a fixed "Cilt Bakım
  * Maskesi" entry rather than whatever the third active service happens
  * to be (that was "Saç + Sakal", a combo of the first two — redundant
- * next to them, not a third distinct thing to show off). An empty photo
- * slot per card is ready for a real customer/treatment photo later
- * rather than a stock image standing in for one. */
+ * next to them, not a third distinct thing to show off).
+ *
+ * Photos are a one-time drop-in like the hero images, matched by
+ * position (see public/popular-cuts/README.md): first card is assumed
+ * to be a haircut, second a beard trim, third the mask — same
+ * assumption the icons already made before real photos existed. */
 export function PopularCuts({ services }: { services: Service[] }) {
   const items: DisplayItem[] = [
     ...services.slice(0, 2).map((s, i) => ({
       id: s.id,
       icon: i === 0 ? Scissors : Wand2,
+      image: i === 0 ? "/popular-cuts/hair.webp" : "/popular-cuts/beard.webp",
       name: s.name,
       description: s.description,
     })),
     {
       id: "mask",
       icon: Droplets,
+      image: "/popular-cuts/mask.webp",
       name: "Cilt Bakım Maskesi",
       description: "Tıraş sonrası ferahlatıcı, arındırıcı cilt bakımı.",
     },
@@ -52,15 +59,17 @@ export function PopularCuts({ services }: { services: Service[] }) {
             const Icon = item.icon;
             return (
               <div key={item.id} className="group overflow-hidden rounded-md border border-border-strong bg-ink">
-                <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-surface">
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background:
-                        "radial-gradient(65% 55% at 75% 25%, rgba(201,162,75,0.14), transparent 60%), linear-gradient(160deg, #1a1815, #0e0d0b)",
-                    }}
+                <div className="relative aspect-[3/4] overflow-hidden bg-surface">
+                  <Image
+                    src={item.image}
+                    alt=""
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
-                  <Icon className="relative size-9 text-gold/70" strokeWidth={1.2} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/10 to-transparent" />
+                  <div className="absolute left-4 top-4 flex size-9 items-center justify-center rounded-full border border-gold/30 bg-ink/70 backdrop-blur-sm">
+                    <Icon className="size-4 text-gold" strokeWidth={1.4} />
+                  </div>
                 </div>
                 <div className="p-6">
                   <h3 className="font-display text-xl text-warm-white">{item.name}</h3>
