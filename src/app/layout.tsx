@@ -1,14 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Manrope } from "next/font/google";
+import { Cormorant_Garamond, Manrope } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { SmoothScrollProvider } from "@/components/providers/smooth-scroll-provider";
 import "./globals.css";
 
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
   subsets: ["latin"],
-  axes: ["opsz", "SOFT", "WONK"],
-  weight: "variable",
+  weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
 });
 
@@ -62,7 +61,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="tr"
-      className={`${fraunces.variable} ${manrope.variable} h-full`}
+      className={`${cormorant.variable} ${manrope.variable} h-full`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-foreground antialiased">

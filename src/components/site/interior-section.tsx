@@ -11,7 +11,7 @@ export function InteriorSection({ images }: { images: string[] }) {
     <section className="bg-ink">
       <div className="mx-auto max-w-7xl px-6 py-24 lg:px-12 lg:py-32">
         <div className="flex flex-col items-start justify-between gap-8 sm:flex-row sm:items-end">
-          <SectionHeading eyebrow="Mekan" title="Salonumuzda bir bakış." />
+          <SectionHeading eyebrow="Galeri" title="Çalışmalarımız" />
           <Link href="/galeri" className="label-caps text-[0.66rem] text-ash transition-colors hover:text-gold">
             Galeriyi Gör →
           </Link>

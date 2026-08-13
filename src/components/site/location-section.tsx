@@ -10,7 +10,11 @@ export function LocationSection({ settings }: { settings: SiteSettingsMap }) {
       <div className="mx-auto max-w-7xl px-6 py-24 lg:px-12 lg:py-32">
         <div className="grid grid-cols-1 gap-14 lg:grid-cols-2 lg:items-center">
           <Reveal>
-            <SectionHeading eyebrow="Konum" title="Bizi ziyaret edin" />
+            <SectionHeading
+              eyebrow="Konum"
+              title="Bize Ulaşın"
+              description="Adres, çalışma saatleri ve randevu için bir tık uzağınızdayız."
+            />
             <ul className="mt-10 space-y-6">
               <li className="flex items-start gap-4">
                 <MapPin className="mt-0.5 size-5 shrink-0 text-gold" strokeWidth={1.4} />

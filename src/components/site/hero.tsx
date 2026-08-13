@@ -65,11 +65,10 @@ export function Hero({ images }: { images: HeroImages }) {
           data-hero-reveal
           className="max-w-3xl font-display text-[2.75rem] leading-[1.05] text-warm-white sm:text-6xl lg:text-7xl"
         >
-          Zanaatla <em className="text-gold not-italic font-medium">Şekillenen</em> Duruş.
+          Bakımlı bir görünüm, <em className="text-gold not-italic font-medium">iyi bir günün</em> başlangıcıdır.
         </h1>
         <p data-hero-reveal className="mt-7 max-w-lg text-base leading-relaxed text-warm-white/75 sm:text-lg">
-          Klasik berberliğin özenini modern bir atmosferde yaşayın. Saç, sakal ve bakımda randevulu,
-          kişiye özel hizmet.
+          Yusuf Demir Erkek Kuaförü&apos;nde her kesim size özel.
         </p>
         <div data-hero-reveal className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
           <Button asChild size="lg">

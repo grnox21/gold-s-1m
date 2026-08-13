@@ -12,7 +12,7 @@ export function ServicesPreview({ services }: { services: Service[] }) {
     <section className="bg-ink">
       <div className="mx-auto max-w-7xl px-6 py-24 lg:px-12 lg:py-32">
         <div className="flex flex-col items-start justify-between gap-8 sm:flex-row sm:items-end">
-          <SectionHeading eyebrow="Hizmetlerimiz" title="Kişiye özel bakım, uçtan uca." />
+          <SectionHeading title="Hizmetler" description="Hizmetlerimiz — Her ihtiyaca uygun, özenle sunulan bakım hizmetleri." />
           <Button asChild variant="outline" size="sm" className="shrink-0">
             <Link href="/hizmetler">
               Tüm Hizmetler <ArrowUpRight className="size-3.5" />

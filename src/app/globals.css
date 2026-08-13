@@ -45,7 +45,7 @@
   --color-accent-foreground: var(--color-ink);
   --color-ring: var(--color-gold-soft);
 
-  --font-display: var(--font-fraunces);
+  --font-display: var(--font-cormorant);
   --font-sans: var(--font-manrope);
   --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
 

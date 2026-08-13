@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { Hero } from "@/components/site/hero";
-import { IntroSection } from "@/components/site/intro-section";
+import { PopularCuts } from "@/components/site/popular-cuts";
 import { ServicesPreview } from "@/components/site/services-preview";
 import { BarbersPreview } from "@/components/site/barbers-preview";
 import { InteriorSection } from "@/components/site/interior-section";
@@ -37,9 +37,9 @@ export default async function HomePage() {
   return (
     <>
       <Hero images={heroImageSrcs()} />
-      <IntroSection />
-      <ServicesPreview services={services} />
+      <PopularCuts services={services} />
       <BarbersPreview barbers={barbers} />
+      <ServicesPreview services={services} />
       <InteriorSection images={gallery} />
       <WhyUs />
       <Testimonials googleMapsUrl={settings.google_maps_url} />

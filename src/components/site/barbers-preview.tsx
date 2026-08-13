@@ -10,7 +10,7 @@ export function BarbersPreview({ barbers }: { barbers: Barber[] }) {
   return (
     <section className="bg-charcoal">
       <div className="mx-auto max-w-7xl px-6 py-24 lg:px-12 lg:py-32">
-        <SectionHeading eyebrow="Ekibimiz" title="Berberlerimiz" description="Randevu adımlarında berberinizi siz seçersiniz." />
+        <SectionHeading title="Berberlerimiz" description="Ekibimiz — İşini seven, deneyimli ellerdeyiz." />
 
         <Reveal stagger={0.1} className="mt-14 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {barbers.map((barber) => (
