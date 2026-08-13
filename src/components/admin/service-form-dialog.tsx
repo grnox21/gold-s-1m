@@ -74,12 +74,19 @@ export function ServiceFormDialog({ service, trigger }: { service?: Service; tri
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="price">Fiyat (₺)</Label>
-              <Input id="price" type="number" step="1" min="0" {...register("price")} />
+              {/* type="text" + inputMode, not type="number": a native
+                  number input renders its digits in the browser/OS's
+                  locale — on an Arabic browser/system locale that's
+                  Eastern Arabic-Indic numerals (٠١٢), regardless of this
+                  page's lang="tr". Plain text always renders the digits
+                  you actually typed. Validation (min, integer, step-of-15)
+                  is enforced by serviceSchema either way. */}
+              <Input id="price" type="text" inputMode="decimal" {...register("price")} />
               {errors.price && <p className="text-xs text-danger">{errors.price.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="durationMinutes">Süre (dk)</Label>
-              <Input id="durationMinutes" type="number" step="15" min="15" {...register("durationMinutes")} />
+              <Input id="durationMinutes" type="text" inputMode="numeric" {...register("durationMinutes")} />
               {errors.durationMinutes && <p className="text-xs text-danger">{errors.durationMinutes.message}</p>}
             </div>
           </div>
