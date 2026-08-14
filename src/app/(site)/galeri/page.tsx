@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 
 import { PageHeader } from "@/components/site/page-header";
-import { listGalleryImageUrls } from "@/lib/gallery-storage";
+import { listGalleryMedia } from "@/lib/gallery-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function GaleriPage() {
-  const images = await listGalleryImageUrls("gallery");
+  const items = await listGalleryMedia("gallery");
 
   return (
     <>
@@ -20,19 +20,25 @@ export default async function GaleriPage() {
 
       <section className="bg-ink">
         <div className="mx-auto max-w-7xl px-6 py-20 lg:px-12 lg:py-28">
-          {images.length > 0 ? (
+          {items.length > 0 ? (
             <div className="columns-1 gap-4 sm:columns-2 lg:columns-3 [&>*]:mb-4">
-              {images.map((src) => (
-                <div key={src} className="overflow-hidden rounded-md border border-border">
-                  <Image
-                    src={src}
-                    alt="Yusuf Demir Erkek Kuaförü"
-                    width={800}
-                    height={1000}
-                    className="h-auto w-full object-cover"
-                  />
-                </div>
-              ))}
+              {items.map((item) =>
+                item.mediaType === "video" ? (
+                  <div key={item.url} className="overflow-hidden rounded-md border border-border">
+                    <video src={item.url} controls playsInline muted className="h-auto w-full bg-ink" />
+                  </div>
+                ) : (
+                  <div key={item.url} className="overflow-hidden rounded-md border border-border">
+                    <Image
+                      src={item.url}
+                      alt="Yusuf Demir Erkek Kuaförü"
+                      width={800}
+                      height={1000}
+                      className="h-auto w-full object-cover"
+                    />
+                  </div>
+                )
+              )}
             </div>
           ) : (
             <div className="flex aspect-[21/9] items-center justify-center rounded-md border border-dashed border-border-strong">
