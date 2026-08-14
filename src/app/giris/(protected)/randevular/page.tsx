@@ -9,8 +9,10 @@ import { AppointmentStatusBadge } from "@/components/admin/status-badge";
 import { AppointmentRowActions } from "@/components/admin/appointment-row-actions";
 import { NewAppointmentDialog } from "@/components/admin/new-appointment-dialog";
 import { ClearPastAppointmentsButton } from "@/components/admin/clear-past-appointments-button";
+import { TableSearchInput } from "@/components/admin/table-search-input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatTL } from "@/lib/format";
+import { sanitizeSearchTerm } from "@/lib/admin/search";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -45,11 +47,14 @@ export default async function AdminAppointmentsPage({
   // A barber login can never see another barber's appointments, no matter
   // what ?barber= is in the URL — force it to their own id.
   const barberFilter = isBarber ? (admin.barber_id ?? "all") : typeof params.barber === "string" ? params.barber : "all";
+  const searchTerm = typeof params.q === "string" ? params.q : "";
 
   const supabase = createServiceClient();
   let query = supabase.from("appointments").select("*").order("start_at", { ascending: false }).limit(200);
   if (statusFilter !== "all") query = query.eq("status", statusFilter);
   if (barberFilter !== "all") query = query.eq("barber_id", barberFilter);
+  const safeSearch = sanitizeSearchTerm(searchTerm);
+  if (safeSearch) query = query.or(`customer_name.ilike.%${safeSearch}%,customer_phone.ilike.%${safeSearch}%`);
 
   const [{ data: appointmentsData }, { data: barbersData }, { data: servicesData }, { count: pastCount }] = await Promise.all([
     query,
@@ -71,6 +76,7 @@ export default async function AdminAppointmentsPage({
     const sp = new URLSearchParams();
     sp.set("status", next.status ?? statusFilter);
     sp.set("barber", next.barber ?? barberFilter);
+    if (searchTerm) sp.set("q", searchTerm);
     return `/giris/randevular?${sp.toString()}`;
   };
 
@@ -86,6 +92,10 @@ export default async function AdminAppointmentsPage({
           </div>
         }
       />
+
+      <div className="mb-6">
+        <TableSearchInput placeholder="Müşteri adı veya telefon ile ara…" />
+      </div>
 
       <div className="mb-6 flex flex-wrap items-center gap-6">
         <div className="flex flex-wrap gap-2">
@@ -160,14 +170,14 @@ export default async function AdminAppointmentsPage({
                   <AppointmentStatusBadge status={a.status} />
                 </TableCell>
                 <TableCell className="pr-6 text-right">
-                  <AppointmentRowActions appointment={a} barbers={barbers} />
+                  <AppointmentRowActions appointment={a} barbers={barbers} isOwner={admin.role === "owner"} />
                 </TableCell>
               </TableRow>
             ))}
             {appointments.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="py-10 text-center text-ash">
-                  Randevu bulunamadı.
+                  {searchTerm ? "Aramanızla eşleşen randevu bulunamadı." : "Randevu bulunamadı."}
                 </TableCell>
               </TableRow>
             )}

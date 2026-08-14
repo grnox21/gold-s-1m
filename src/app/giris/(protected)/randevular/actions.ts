@@ -162,6 +162,29 @@ export async function clearPastAppointments(): Promise<ActionResult> {
   return { ok: true };
 }
 
+/**
+ * Permanently deletes a single appointment — distinct from "İptal Et",
+ * which only flips its status to cancelled and keeps the row (and its
+ * history) around. Owner-only, same "owner controls who can delete"
+ * boundary as clearPastAppointments()/clearAllCustomers()/gorseller's
+ * deleteGalleryImage() — checked here, not just hidden in the UI.
+ * appointment_services and notification_logs cascade on delete
+ * (see 0005/0006), so nothing is left orphaned.
+ */
+export async function adminDeleteAppointment(id: string): Promise<ActionResult> {
+  const { admin } = await requireAdmin();
+  if (admin.role !== "owner") {
+    return { ok: false, error: "Randevuları yalnızca işletme sahibi silebilir." };
+  }
+
+  const supabase = createServiceClient();
+  const { error } = await supabase.from("appointments").delete().eq("id", id);
+  if (error) return { ok: false, error: "Randevu silinemedi." };
+
+  revalidateAppointmentPaths();
+  return { ok: true };
+}
+
 export async function adminRescheduleAppointment(input: unknown): Promise<ActionResult> {
   const { admin } = await requireAdmin();
   const parsed = rescheduleSchema.safeParse(input);

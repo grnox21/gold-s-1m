@@ -33,3 +33,24 @@ export async function clearAllCustomers(): Promise<ActionResult> {
   revalidatePath("/giris/musteriler");
   return { ok: true };
 }
+
+/**
+ * Deletes a single customer record — same idea as clearAllCustomers() but
+ * for one row instead of the whole table, so the owner can keep some
+ * customers and remove specific ones instead of an all-or-nothing wipe.
+ * Appointment history is untouched for the same reason as clearAllCustomers
+ * (0011's ON DELETE SET NULL). Owner-only, checked here too.
+ */
+export async function deleteCustomer(id: string): Promise<ActionResult> {
+  const { admin } = await requireFullAdmin();
+  if (admin.role !== "owner") {
+    return { ok: false, error: "Müşteri kayıtlarını yalnızca işletme sahibi silebilir." };
+  }
+
+  const supabase = createServiceClient();
+  const { error } = await supabase.from("customers").delete().eq("id", id);
+
+  if (error) return { ok: false, error: "Müşteri silinemedi." };
+  revalidatePath("/giris/musteriler");
+  return { ok: true };
+}

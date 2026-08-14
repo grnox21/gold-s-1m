@@ -102,13 +102,21 @@ export default async function AdminCalendarPage({ searchParams }: PageProps<"/gi
       ) : view === "week" ? (
         <WeekAgenda rangeStart={rangeStart} appointments={appointments} />
       ) : (
-        <DayAgenda appointments={appointments} barbers={barbers} />
+        <DayAgenda appointments={appointments} barbers={barbers} isOwner={admin.role === "owner"} />
       )}
     </div>
   );
 }
 
-function DayAgenda({ appointments, barbers }: { appointments: AppointmentWithServices[]; barbers: Barber[] }) {
+function DayAgenda({
+  appointments,
+  barbers,
+  isOwner,
+}: {
+  appointments: AppointmentWithServices[];
+  barbers: Barber[];
+  isOwner: boolean;
+}) {
   if (appointments.length === 0) {
     return <p className="rounded-md border border-dashed border-border-strong py-16 text-center text-sm text-ash">Bu gün için randevu yok.</p>;
   }
@@ -123,7 +131,7 @@ function DayAgenda({ appointments, barbers }: { appointments: AppointmentWithSer
           </div>
           <span className="w-32 shrink-0 text-sm text-ash">{a.barberName}</span>
           <AppointmentStatusBadge status={a.status} />
-          <AppointmentRowActions appointment={a} barbers={barbers} />
+          <AppointmentRowActions appointment={a} barbers={barbers} isOwner={isOwner} />
         </div>
       ))}
     </div>
