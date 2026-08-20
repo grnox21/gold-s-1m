@@ -12,15 +12,13 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      // Default is 1MB — way too small for a phone-camera photo, let
-      // alone a Görseller video upload. Needs to clear
-      // MAX_GALLERY_VIDEO_BYTES (lib/gallery-constants.ts, the larger of
-      // the two limits) with room to spare for multipart/FormData
-      // overhead on top of the raw file bytes, or a large-but-still-valid
-      // upload gets killed by this framework-level limit before
-      // validation ever gets a chance to return a friendly error — it
-      // just fails outright.
-      bodySizeLimit: "60mb",
+      // Default is 1MB — way too small for a phone-camera photo. Needs to
+      // clear MAX_GALLERY_IMAGE_BYTES (lib/gallery-constants.ts) with room
+      // to spare for multipart/FormData overhead on top of the raw file
+      // bytes, or a large-but-still-valid photo gets killed by this
+      // framework-level limit before validation ever gets a chance to
+      // return a friendly error — it just fails outright.
+      bodySizeLimit: "20mb",
     },
   },
 };

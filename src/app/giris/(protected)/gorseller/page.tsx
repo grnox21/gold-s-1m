@@ -18,7 +18,7 @@ export default async function AdminGalleryPage() {
     <div>
       <AdminPageHeading
         title="Görseller"
-        description="Fotoğraf veya video yükleyin; her görselin altındaki kutucuklarla hangi sayfada göründüğünü tek tek seçin — Galeri, Hakkımızda. Video yalnızca Galeri'de gösterilir."
+        description="Her görselin altındaki kutucuklarla hangi sayfada göründüğünü tek tek seçin — Galeri, Hakkımızda."
         action={<GalleryUploadForm />}
       />
 
