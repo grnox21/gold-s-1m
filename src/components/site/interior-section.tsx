@@ -22,9 +22,14 @@ export function InteriorSection({ images }: { images: string[] }) {
             {shown.map((src, i) => (
               <div
                 key={src}
-                className={`relative overflow-hidden rounded-md border border-border ${i === 0 ? "sm:col-span-2 sm:row-span-2 aspect-[4/3]" : "aspect-square"}`}
+                className={`group relative overflow-hidden rounded-md border border-border transition-[border-color,box-shadow] duration-500 hover:border-gold/40 hover:shadow-[0_28px_48px_-24px_rgba(0,0,0,0.65)] ${i === 0 ? "sm:col-span-2 sm:row-span-2 aspect-[4/3]" : "aspect-square"}`}
               >
-                <Image src={src} alt="Yusuf Demir Erkek Kuaförü" fill className="object-cover" />
+                <Image
+                  src={src}
+                  alt="Yusuf Demir Erkek Kuaförü"
+                  fill
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                />
               </div>
             ))}
           </Reveal>

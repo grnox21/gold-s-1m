@@ -32,7 +32,10 @@ export function Testimonials({ googleMapsUrl }: { googleMapsUrl: string }) {
 
         <Reveal stagger={0.1} className="mt-16 grid grid-cols-1 gap-8 lg:grid-cols-3">
           {REVIEWS.map((review) => (
-            <div key={review.name} className="flex flex-col rounded-md border border-border bg-ink p-8">
+            <div
+              key={review.name}
+              className="flex flex-col rounded-md border border-border bg-ink p-8 transition-[transform,box-shadow,border-color] duration-500 ease-out hover:-translate-y-1.5 hover:border-gold/30 hover:shadow-[0_24px_40px_-24px_rgba(0,0,0,0.6)]"
+            >
               <div className="flex gap-1">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star key={i} className="size-3.5 text-gold" fill="currentColor" strokeWidth={0} />

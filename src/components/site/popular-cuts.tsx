@@ -58,7 +58,10 @@ export function PopularCuts({ services }: { services: Service[] }) {
           {items.map((item) => {
             const Icon = item.icon;
             return (
-              <div key={item.id} className="group overflow-hidden rounded-md border border-border-strong bg-ink">
+              <div
+                key={item.id}
+                className="group overflow-hidden rounded-md border border-border-strong bg-ink transition-[transform,box-shadow,border-color] duration-500 ease-out hover:-translate-y-2 hover:border-gold/40 hover:shadow-[0_28px_48px_-24px_rgba(0,0,0,0.65)]"
+              >
                 <div className="relative aspect-[3/4] overflow-hidden bg-surface">
                   <Image
                     src={item.image}

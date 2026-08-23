@@ -3,29 +3,57 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { Button } from "@/components/ui/button";
 import type { HeroImages } from "@/lib/brand-assets";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 export function Hero({ images }: { images: HeroImages }) {
   const { desktop, mobile } = images;
   const fallbackSrc = desktop ?? mobile;
   const rootRef = useRef<HTMLDivElement>(null);
+  const bgRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion || !rootRef.current) return;
 
-    const targets = rootRef.current.querySelectorAll("[data-hero-reveal]");
-    gsap.set(targets, { opacity: 0, y: 24 });
-    gsap.to(targets, {
-      opacity: 1,
-      y: 0,
-      duration: 1.1,
-      ease: "power3.out",
-      stagger: 0.12,
-      delay: 0.15,
-    });
+    const ctx = gsap.context(() => {
+      const targets = rootRef.current!.querySelectorAll("[data-hero-reveal]");
+      gsap.set(targets, { opacity: 0, y: 24 });
+      gsap.to(targets, {
+        opacity: 1,
+        y: 0,
+        duration: 1.1,
+        ease: "power3.out",
+        stagger: 0.12,
+        delay: 0.15,
+      });
+
+      // Subtle parallax: the background drifts slower than the page scrolls
+      // past it, scaled up slightly so the drift never exposes an edge —
+      // this is what makes a hero feel like it has depth instead of being
+      // one flat photo sliding under fixed text.
+      if (bgRef.current) {
+        gsap.set(bgRef.current, { scale: 1.12 });
+        gsap.to(bgRef.current, {
+          yPercent: 12,
+          ease: "none",
+          scrollTrigger: {
+            trigger: rootRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: true,
+          },
+        });
+      }
+    }, rootRef);
+
+    return () => ctx.revert();
   }, []);
 
   return (
@@ -37,7 +65,7 @@ export function Hero({ images }: { images: HeroImages }) {
           mobile.webp are two different crops of the same scene, not two
           resolutions of the same crop, so this needs real art direction:
           the browser fetches only the variant that matches, not both. */}
-      <div className="absolute inset-0">
+      <div ref={bgRef} className="absolute inset-0">
         {fallbackSrc ? (
           <picture>
             {mobile && <source media="(max-width: 767px)" srcSet={mobile} />}

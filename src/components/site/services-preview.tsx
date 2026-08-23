@@ -25,7 +25,7 @@ export function ServicesPreview({ services }: { services: Service[] }) {
             <Link
               key={service.id}
               href="/randevu"
-              className="group flex flex-col justify-between gap-8 bg-charcoal p-8 transition-colors hover:bg-charcoal-2"
+              className="group relative flex flex-col justify-between gap-8 bg-charcoal p-8 transition-[background-color,transform] duration-300 ease-out hover:z-10 hover:-translate-y-1.5 hover:bg-charcoal-2 hover:shadow-[0_24px_40px_-24px_rgba(0,0,0,0.6)]"
             >
               <div>
                 <Scissors className="size-5 text-gold" strokeWidth={1.4} />

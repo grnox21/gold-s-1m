@@ -17,7 +17,7 @@ export function BarbersPreview({ barbers }: { barbers: Barber[] }) {
             <Link
               key={barber.id}
               href={`/berberler/${barber.slug}`}
-              className="group block overflow-hidden rounded-md border border-border bg-ink transition-colors hover:border-gold/40"
+              className="group block overflow-hidden rounded-md border border-border bg-ink transition-[transform,box-shadow,border-color] duration-500 ease-out hover:-translate-y-2 hover:border-gold/40 hover:shadow-[0_28px_48px_-24px_rgba(0,0,0,0.65)]"
             >
               <div className="relative aspect-[4/5] overflow-hidden bg-surface-raised">
                 {barber.photo_url ? (
