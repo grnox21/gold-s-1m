@@ -69,6 +69,7 @@ export const siteSettingsSchema = z.object({
   instagram_url: z.string().trim().optional().or(z.literal("")),
   google_maps_url: z.string().trim().optional().or(z.literal("")),
   opening_hours_note: z.string().trim().optional().or(z.literal("")),
+  owner_notification_email: z.string().trim().email("Geçerli bir e-posta girin.").optional().or(z.literal("")),
   meta_title: z.string().trim().optional().or(z.literal("")),
   meta_description: z.string().trim().optional().or(z.literal("")),
 });

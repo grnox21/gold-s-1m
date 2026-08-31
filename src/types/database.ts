@@ -92,6 +92,10 @@ export interface Appointment {
   confirmation_sent: boolean;
   barber_reminder_sent: boolean;
   customer_reminder_sent: boolean;
+  /** Emailed to the shop owner (lib/email/notify.ts) — separate channel
+   * and recipient from the WhatsApp columns above. */
+  owner_notification_sent: boolean;
+  owner_reminder_sent: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -107,8 +111,8 @@ export interface AppointmentService {
 export interface NotificationLog {
   id: string;
   appointment_id: string | null;
-  channel: "whatsapp";
-  recipient_type: "barber" | "customer";
+  channel: "whatsapp" | "email";
+  recipient_type: "barber" | "customer" | "owner";
   recipient_number: string | null;
   template: string;
   status: "sent" | "failed" | "skipped";

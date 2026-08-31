@@ -112,7 +112,15 @@ export async function Footer() {
 
         <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 text-xs text-ash sm:flex-row">
           <p>© {new Date().getFullYear()} Yusuf Demir Erkek Kuaförü. Tüm hakları saklıdır.</p>
-          <p className="label-caps text-[0.6rem]">{settings.opening_hours_note}</p>
+          <div className="flex items-center gap-5">
+            <p className="label-caps text-[0.6rem]">{settings.opening_hours_note}</p>
+            {/* Owner-facing, on purpose easy to spot down here — the shop
+                owner asked for a quicker way to find the admin login than
+                remembering the /giris URL by heart. */}
+            <Link href="/giris" className="label-caps text-[0.6rem] text-ash transition-colors hover:text-gold">
+              Giriş
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

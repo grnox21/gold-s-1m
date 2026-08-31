@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { expireStaleHolds } from "@/lib/booking/engine";
 import { notifyAppointment } from "@/lib/whatsapp/send";
+import { notifyOwnerByEmail } from "@/lib/email/notify";
 import type { Appointment } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -22,10 +23,11 @@ export const dynamic = "force-dynamic";
  * Whichever you pick, set CRON_SECRET in your env and send it as
  * `Authorization: Bearer $CRON_SECRET` — that's what's checked below.
  *
- * Two responsibilities, both idempotent (see notifyAppointment's
- * WHERE-flag=false claim — running this twice in the same minute, or every
- * minute forever, never double-sends):
- *   1. 30-minute reminders to the barber and the customer.
+ * Two responsibilities, both idempotent (see notifyAppointment's /
+ * notifyOwnerByEmail's WHERE-flag=false claim — running this twice in the
+ * same minute, or every minute forever, never double-sends):
+ *   1. 30-minute reminders to the barber, the customer, and (by email) the
+ *      shop owner.
  *   2. A safety-net retry for booking confirmations that didn't send
  *      synchronously right after checkout (e.g. a transient WhatsApp API
  *      error) — bounded to the last hour so it never resurrects old rows.
@@ -50,10 +52,11 @@ export async function GET(request: Request) {
     .eq("status", "confirmed")
     .gte("start_at", windowStart)
     .lte("start_at", windowEnd)
-    .or("barber_reminder_sent.eq.false,customer_reminder_sent.eq.false");
+    .or("barber_reminder_sent.eq.false,customer_reminder_sent.eq.false,owner_reminder_sent.eq.false");
 
   let barberReminders = 0;
   let customerReminders = 0;
+  let ownerReminders = 0;
 
   for (const appointment of (dueAppointments ?? []) as Appointment[]) {
     if (!appointment.barber_reminder_sent) {
@@ -63,6 +66,10 @@ export async function GET(request: Request) {
     if (!appointment.customer_reminder_sent) {
       const result = await notifyAppointment(supabase, appointment.id, "reminder_customer");
       if (result.status === "sent" || result.status === "skipped") customerReminders++;
+    }
+    if (!appointment.owner_reminder_sent) {
+      const result = await notifyOwnerByEmail(supabase, appointment.id, "reminder_owner");
+      if (result.status === "sent" || result.status === "skipped") ownerReminders++;
     }
   }
 
@@ -85,6 +92,7 @@ export async function GET(request: Request) {
     checkedAt: new Date(now).toISOString(),
     barberReminders,
     customerReminders,
+    ownerReminders,
     retriedConfirmations,
   });
 }

@@ -62,6 +62,25 @@ export function SiteSettingsForm({ settings }: { settings: SiteSettingsMap }) {
 
       <Card>
         <CardHeader>
+          <CardTitle>Bildirimler</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <Field label="İşletme Sahibi E-posta" htmlFor="owner_notification_email">
+            <Input
+              id="owner_notification_email"
+              type="email"
+              placeholder="ornek@eposta.com"
+              {...register("owner_notification_email")}
+            />
+          </Field>
+          <p className="text-xs text-ash">
+            Yeni bir randevu oluşturulduğunda ve randevudan 30 dakika önce bu adrese e-posta gönderilir.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>SEO</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">

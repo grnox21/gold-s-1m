@@ -26,7 +26,10 @@ const DEDUPE_COLUMN: Partial<Record<NotificationKind, "confirmation_sent" | "bar
   reminder_customer: "customer_reminder_sent",
 };
 
-type AppointmentWithRelations = Appointment & {
+// Exported so lib/email/notify.ts (the owner's email notifications — a
+// separate channel, same underlying appointment data) can build the same
+// NotificationContext without duplicating this join shape.
+export type AppointmentWithRelations = Appointment & {
   barber: Barber;
   appointment_services: { name_at_booking: string }[];
 };
@@ -52,7 +55,7 @@ async function claimSlot(
   return Boolean(data);
 }
 
-function buildContext(appointment: AppointmentWithRelations): NotificationContext {
+export function buildContext(appointment: AppointmentWithRelations): NotificationContext {
   const start = new Date(appointment.start_at);
   const end = new Date(appointment.end_at);
   return {

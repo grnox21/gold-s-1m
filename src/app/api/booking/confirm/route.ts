@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/service";
 import { confirmHold, suggestAlternatives } from "@/lib/booking/engine";
 import { notifyAppointment } from "@/lib/whatsapp/send";
+import { notifyOwnerByEmail } from "@/lib/email/notify";
 import { dateStringFromInstant, formatIstanbulTime } from "@/lib/booking/time";
 import type { Barber } from "@/types/database";
 
@@ -78,11 +79,17 @@ export async function POST(request: Request) {
   ]);
   const barber = barberData as Barber | null;
 
-  // Notifications never block the booking result — a WhatsApp failure must
-  // not undo an already-confirmed appointment.
+  // Notifications never block the booking result — a WhatsApp/email failure
+  // must not undo an already-confirmed appointment. Still awaited (via
+  // allSettled, not fired-and-forgotten): an unawaited promise here could
+  // get killed mid-flight the moment this function returns its response on
+  // serverless hosting. The owner's email fires for every booking
+  // regardless of WhatsApp settings — a separate channel the owner asked
+  // for specifically to always know about new appointments.
   const [barberNotify, customerNotify] = await Promise.allSettled([
     notifyAppointment(supabase, confirmed.id, "booking_barber"),
     notifyAppointment(supabase, confirmed.id, "booking_customer"),
+    notifyOwnerByEmail(supabase, confirmed.id, "booking_owner"),
   ]);
 
   return NextResponse.json({

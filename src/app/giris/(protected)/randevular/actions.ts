@@ -15,6 +15,7 @@ import {
 } from "@/lib/booking/engine";
 import { normalizeTurkishPhone } from "@/lib/booking/phone";
 import { notifyAppointment } from "@/lib/whatsapp/send";
+import { notifyOwnerByEmail } from "@/lib/email/notify";
 import type { ActionResult } from "@/lib/admin/types";
 import type { AdminUser } from "@/types/database";
 
@@ -80,6 +81,11 @@ export async function adminCreateAppointment(input: unknown): Promise<ActionResu
         notifyAppointment(supabase, appointment.id, "booking_customer"),
       ]);
     }
+    // Independent of the WhatsApp `notify` toggle above (which an admin
+    // might turn off for e.g. a backfilled walk-in) — the owner's own
+    // email notice fires for every appointment created here, same as the
+    // public booking flow (see /api/booking/confirm/route.ts).
+    await notifyOwnerByEmail(supabase, appointment.id, "booking_owner");
   } catch (err) {
     if (err instanceof BookingError) return { ok: false, error: err.message };
     return { ok: false, error: "Randevu oluşturulamadı." };
