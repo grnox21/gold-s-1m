@@ -13,8 +13,19 @@ const MAX_DAYS_AHEAD = 60;
 function toDate(dateStr: string) {
   return new Date(`${dateStr}T12:00:00+03:00`);
 }
+/** Reads the Date's own local Y/M/D — never round-trips through
+ * .toISOString(), which converts to UTC and silently shifts the date back
+ * a day for any visitor whose browser timezone is ahead of UTC (Turkey is
+ * a fixed UTC+3, so this bit every visitor browsing from Istanbul: the
+ * calendar grid cells below are built with `new Date(year, month, d)` —
+ * local midnight — and local midnight for day D in UTC+3 is still D-1
+ * evening in UTC, so `.toISOString().slice(0, 10)` reported D-1). That's
+ * exactly the "picked the 3rd, got booked into the 2nd" bug this fixes. */
 function toDateStr(date: Date) {
-  return date.toISOString().slice(0, 10);
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 export function DateStep({
