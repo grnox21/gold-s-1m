@@ -19,7 +19,7 @@ const manrope = Manrope({
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://yusufdemir.com"
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://yusufdemirshop.com"
   ),
   title: {
     default: "Yusuf Demir Erkek Kuaförü | Premium Erkek Kuaförü",
@@ -51,6 +51,13 @@ export const metadata: Metadata = {
   // No `icons` entry here on purpose — app/icon.tsx and app/apple-icon.tsx
   // are auto-detected by Next and injected automatically; pointing this at
   // a static /icon.png that doesn't exist would silently 404.
+  // Next renders this as <meta name="google-site-verification" content="…">
+  // in <head> automatically — Google Search Console's ownership-proof tag
+  // for yusufdemirshop.com. Safe to leave in place permanently even after
+  // verification succeeds; Search Console re-checks it on renewals.
+  verification: {
+    google: "-JMjROVwnHOSuHSreWrf4hRZHfZ7YEwzhagK2edf_As",
+  },
 };
 
 export const viewport: Viewport = {
